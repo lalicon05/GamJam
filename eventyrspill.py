@@ -1,4 +1,5 @@
 #imports
+print("Bean")
 import pygame
 import math
 
