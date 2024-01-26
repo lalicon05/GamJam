@@ -16,6 +16,7 @@ class Spiller:
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
         self.retning = [0, 0]
+        self.skyt_retning = [0, 0]
         self.size = 25
         self.color = 'darkolivegreen3'
         self.speed = 6
@@ -26,10 +27,22 @@ class Spiller:
         pygame.draw.rect(screen, self.color, self.rect)
 
 class Magic:
-    def __init__(self, x, y):
+    def __init__(self, retning, x, y):
         self.damage = 1
         self.speed = 10
-        self.direction = [x, y]
+        self.retning = retning
+        self.x = x
+        self.y = y
+    
+    def update(self):
+        pygame.draw.circle(screen, 'blue', (self.x, self.y), 10)
+        if(self.retning[0] != 0) and (self.retning[1] != 0):
+            self.x += self.retning[0] * self.speed / math.sqrt(2)
+            self.y += self.retning[1] * self.speed / math.sqrt(2)
+        else:
+            self.x += self.retning[0] * self.speed
+            self.y += self.retning[1] * self.speed
+        
 
 
 #fonts og størrelse til tekst
@@ -45,6 +58,7 @@ def draw_text(text : str, font : pygame.font.Font, text_col : pygame.Color, x : 
 
 #Lager objekter
 spiller = Spiller()
+prosjektiler = []
 
 #Kjører spillet
 while running:
@@ -56,15 +70,24 @@ while running:
     keys = pygame.key.get_pressed()
 
     spiller.retning = [0, 0]
+    spiller.skyt_retning = [0, 0]
 
+    #Inputs
     if(keys[pygame.K_d]) and((spiller.x) < screen.get_width()):
         spiller.retning[0] += 1
+        spiller.skyt_retning[0] = 1
     if(keys[pygame.K_a]) and ((spiller.x) > 0): 
         spiller.retning[0] -= 1
+        spiller.skyt_retning[0] = -1
     if(keys[pygame.K_s]) and((spiller.y) < screen.get_height()):
         spiller.retning[1] += 1
+        spiller.skyt_retning[1] = 1
     if(keys[pygame.K_w]) and ((spiller.y) > 0): 
         spiller.retning[1] -= 1
+        spiller.skyt_retning[1] = -1
+    if(keys[pygame.K_SPACE]):
+        spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
+        prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
 
 
     if(spiller.retning[0] != 0) and (spiller.retning[1] != 0):
@@ -74,11 +97,16 @@ while running:
         spiller.x += spiller.retning[0] * spiller.speed
         spiller.y += spiller.retning[1] * spiller.speed
     
+    
 
     # Fyller skjermen med hvit farge
     screen.fill("hotpink4")
 
+    for prosjektil in prosjektiler:
+        prosjektil.update()
+
     spiller.draw()
+    
 
     # Oppdaterer hele skjermen
     pygame.display.flip()
