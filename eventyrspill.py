@@ -1,6 +1,10 @@
 #imports
-import pygame
-import math
+import pygame #importerer pygame
+import math #importerer matte funksjoner
+from pygame import mixer #import for musikk
+
+pygame.mixer.pre_init(44100, -16, 2, 512)
+mixer.init()
 
 #Setter opp det essensielle
 pygame.init()
@@ -81,21 +85,23 @@ class Magic:
         self.retning = retning
         self.x = x
         self.y = y
+        self.rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
     #funksjon for å oppdatere prosjektilet
     def update(self):
-        pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
         if(self.retning[0] != 0) and (self.retning[1] != 0):
             self.x += self.retning[0] * self.speed / math.sqrt(2)
             self.y += self.retning[1] * self.speed / math.sqrt(2)
         else:
             self.x += self.retning[0] * self.speed
             self.y += self.retning[1] * self.speed
+            pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
+        self.rect = pygame.Rect(self.x - 3, self.y - 6, 12, 12)
 
 
 
 class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
-    def __init__(self, tileset, room_coords, r, l, u, d):
+    def __init__(self, tileset, room_coords):
         """ Preset
         [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -149,7 +155,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                 self.door_u = True
 
     def draw(self):
-        wall_rects = [] #liste over alle vegger
+        self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
 
 
@@ -204,7 +210,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
 
 
 
-                image = pygame.Surface((24, 24)).convert_alpha()
+                image = pygame.Surface((24, 24)).convert_alpha() #ett surface å tegne spriten til veggen på
                 image.blit(self.sheet, (0, 0), self.TheTile) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
                 image = pygame.transform.scale(image, (48, 48)) #lar deg skalere bildet etter ønske
                 image.set_colorkey('BLACK') #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
@@ -214,11 +220,14 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                     self.door_rects.append(pygame.Rect(self.get_tile_position(row, col), (48, 48)))
 
                 if self.get_tile_type(row, col) == 1: #hvis tile er en vegg, legg til i liste over vegger
-                    wall_rects.append(pygame.Rect(self.get_tile_position(row, col), (48, 48)))
-        return wall_rects #returnerer vegger slik at man kan kollidere med de
+                    self.wall_rects.append(pygame.Rect(self.get_tile_position(row, col), (48, 48)))
+        return self.wall_rects #returnerer vegger slik at man kan kollidere med de
             
     def get_tile_type(self, row, col): #returnerer type tile
         return self.tileset[row][col]
+    
+    def get_walls(self):
+        return self.wall_rects
 
     def get_tile_position(self, row, col): #henter posisjon til tile
         return col * 48, row * 48
@@ -306,13 +315,25 @@ def check_neighbor_rooms():
         if r != True:
             rommene[room].tileset[6][15] == 1
 
+#Laster inn lyder
+bgm = pygame.mixer.Sound('bgMusic.mp3') #importerer lydfilen for bakgrunnsmusikk
+bgm.set_volume(0.3) #halvverer volumet
+bmg_delay = 16000
+last_bgm = -16000
+
+s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
+s_fx.set_volume(0.9)
+
+b_fx = pygame.mixer.Sound('boom.mp3')
+b_fx.set_volume(0.25)
 
 #Lager objekter -------------------------------------------------------------------------------------
 spiller = Spiller()
 prosjektiler = []
 
 rommene = [] #liste over rom
-rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #legger til rom i listen
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #legger til rom i listen
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -321,8 +342,10 @@ rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #legge
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], (0, 0), False, False, False, False))
-rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (0, 0)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -331,8 +354,10 @@ rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], (-1, 0),False, False, False, False))
-rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (-1, 0)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -341,8 +366,10 @@ rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], (1, 1),False, False, False, False))
-rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (1, 1)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -351,8 +378,10 @@ rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], (1, 0),False, False, False, False))
-rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (1, 0)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -361,7 +390,32 @@ rommene.append(Tileset([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]], (0, -1),False, False, False, False))
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (0, -1)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (0, -2)))
+rommene.append(Tileset([
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                ], (0, 1)))
 
 
 
@@ -371,8 +425,14 @@ active_room = 0
 
 rommene[active_room].draw()
 rommene[active_room].place_doors(rommene)
+
+time = 0
 #Kjører spillet
 while running:
+    if(time - last_bgm > bmg_delay): #spiller av musikken
+        bgm.play()
+        last_bgm = time
+
     # Avslutter løkken
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -416,10 +476,12 @@ while running:
                 spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
                 prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
                 spiller.last_attack = time
+                s_fx.play()
             else:
                 spiller.skyt_retning = [spiller.facing_r, spiller.facing_u]
                 prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
                 spiller.last_attack = time
+                s_fx.play()
 
     if(keys[pygame.K_RETURN]):
         enter = True
@@ -440,10 +502,8 @@ while running:
             door_rects = rommene[active_room].get_door_rects() #hvis man trykker enter flytt til neste rom
             if door_handle(spiller.rect, door_rects):
                 if(which_door(new_x, new_y) == 'r'):
-                    print("door right")
                     for room_index in range(len(rommene)):
                         if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
-                            print("yes")
                             active_room = room_index
                             spiller.x = 32
                             spiller.y = spiller.y
@@ -477,9 +537,25 @@ while running:
 
     #oppdaterer alle prosjektiler
     for prosjektil in prosjektiler:
-        if(prosjektil.retning == [0, 0]):
+        prosjektil.update() #oppdaterer prosjektiler
+        for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
+            if pygame.Rect.colliderect(prosjektil.rect, wall):
+                try:
+                    prosjektiler.pop(prosjektiler.index(prosjektil))
+                    b_fx.play()
+                except:
+                    print("did not")
+
+        if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis prosjektiler går utenfor skjermen på sidene
             prosjektiler.pop(prosjektiler.index(prosjektil))
-        prosjektil.update()
+            b_fx.play()
+        if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
+            prosjektiler.pop(prosjektiler.index(prosjektil))
+            b_fx.play()
+
+        if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
+            prosjektiler.pop(prosjektiler.index(prosjektil))
+        
 
     #tegner spiller i sin posisjon
     spiller.draw()
