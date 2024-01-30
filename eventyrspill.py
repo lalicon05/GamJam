@@ -95,7 +95,7 @@ class Magic:
         else:
             self.x += self.retning[0] * self.speed
             self.y += self.retning[1] * self.speed
-            pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
+        pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
         self.rect = pygame.Rect(self.x - 3, self.y - 6, 12, 12)
 
 
@@ -315,6 +315,7 @@ def check_neighbor_rooms():
         if r != True:
             rommene[room].tileset[6][15] == 1
 
+
 #Laster inn lyder
 bgm = pygame.mixer.Sound('bgMusic.mp3') #importerer lydfilen for bakgrunnsmusikk
 bgm.set_volume(0.3) #halvverer volumet
@@ -399,8 +400,8 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
                 ], (0, -2)))
@@ -412,7 +413,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
                 ], (0, 1)))
@@ -423,11 +424,17 @@ last_door = 0
 enter = False
 active_room = 0
 
+active_coords = (0, 0)
 rommene[active_room].draw()
 rommene[active_room].place_doors(rommene)
 
+new_room = False
+
 time = 0
-#Kjører spillet
+
+
+
+#Kjører spillet -------------------------------------------------------------
 while running:
     if(time - last_bgm > bmg_delay): #spiller av musikken
         bgm.play()
@@ -443,7 +450,6 @@ while running:
     spiller.retning = [0, 0]
     spiller.skyt_retning = [0, 0]
 
-    active_coords = rommene[active_room].get_room_coords()
 
     #Inputs
     if keys[pygame.K_d] and (spiller.x + spiller.speed) < screen.get_width() - 16:
@@ -493,8 +499,13 @@ while running:
         new_x = spiller.x + spiller.retning[0] * spiller.speed
         new_y = spiller.y + spiller.retning[1] * spiller.speed
 
+    if new_room: #Sjekker
+        active_coords = rommene[active_room].get_room_coords()
+        new_room = False
+
     player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
     rommene[active_room].draw() #tegner rommet
+
 
     #sjekker om man er i en dør mens man trykker enter
     if(enter == True):
@@ -505,33 +516,38 @@ while running:
                     for room_index in range(len(rommene)):
                         if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
                             active_room = room_index
+                            print(rommene[active_room].room_coords)
                             spiller.x = 32
                             spiller.y = spiller.y
                             rommene[room_index].place_doors(rommene)
+                            new_room = True
                 if(which_door(new_x, new_y) == 'l'):
                     for room_index in range(len(rommene)):
                         if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
-                            print("yes")
                             active_room = room_index
+                            print(rommene[active_room].room_coords)
                             spiller.x = screen.get_width() - 32
                             spiller.y = spiller.y
                             rommene[room_index].place_doors(rommene)
+                            new_room = True
                 if(which_door(new_x, new_y) == 'u'):
                     for room_index in range(len(rommene)):
                         if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
-                            print("yes")
                             active_room = room_index
+                            print(rommene[active_room].room_coords)
                             spiller.x = spiller.x
                             spiller.y = screen.get_height() - 32
                             rommene[room_index].place_doors(rommene)
+                            new_room = True
                 if(which_door(new_x, new_y) == 'd'):
                     for room_index in range(len(rommene)):
                         if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
-                            print("yes")
                             active_room = room_index
+                            print(rommene[active_room].room_coords)
                             spiller.x = spiller.x
                             spiller.y = 32
                             rommene[room_index].place_doors(rommene)
+                            new_room = True
                 last_door = time
         enter = False
 
