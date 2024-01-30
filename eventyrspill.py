@@ -161,23 +161,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def draw(self):
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
-
-
-        #sjekker om det er ett naborom i hver retning
-        """for rom in range(len(room_list)):
-            #sjekker rom til høyre (rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1])
-            if(self.room_coords[0] + 1, self.room_coords[1]) == (room_list[rom].room_coords):
-                self.door_r = True
-            #sjekker rom til venstre
-            if(self.room_coords[0] - 1, self.room_coords[1]) == (room_list[rom].room_coords):
-                self.door_l = True
-            #sjekker rom nedover
-            if(self.room_coords[0], self.room_coords[1] - 1) == (room_list[rom].room_coords):
-                self.door_d = True
-            #sjekker rom oppover
-            if(self.room_coords[0], self.room_coords[1] + 1) == (room_list[rom].room_coords):
-                self.door_u = True"""
-
+        
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
