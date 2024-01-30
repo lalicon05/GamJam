@@ -9,7 +9,7 @@ mixer.init()
 #Setter opp det essensielle
 pygame.init()
 screen = pygame.display.set_mode((768, 480)) # Setter skjermen til 500x500 piksler.
-pygame.display.set_caption(r"Isak's Kjeller-eventyr") #navnet på spillet
+pygame.display.set_caption(r"Kjeller-eventyr") #navnet på spillet
 clock = pygame.time.Clock()
 running = True
 
