@@ -105,7 +105,7 @@ class Magic:
 class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def __init__(self, tileset, room_coords):
         """ Preset
-        [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -114,7 +114,9 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ]
         """
         self.sheet = sprite_sheet_image #laster inn sprite -sheet
         self.tileset = tileset #
@@ -161,20 +163,6 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.door_rects = []
 
 
-        #sjekker om det er ett naborom i hver retning
-        """for rom in range(len(room_list)):
-            #sjekker rom til høyre (rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1])
-            if(self.room_coords[0] + 1, self.room_coords[1]) == (room_list[rom].room_coords):
-                self.door_r = True
-            #sjekker rom til venstre
-            if(self.room_coords[0] - 1, self.room_coords[1]) == (room_list[rom].room_coords):
-                self.door_l = True
-            #sjekker rom nedover
-            if(self.room_coords[0], self.room_coords[1] - 1) == (room_list[rom].room_coords):
-                self.door_d = True
-            #sjekker rom oppover
-            if(self.room_coords[0], self.room_coords[1] + 1) == (room_list[rom].room_coords):
-                self.door_u = True"""
 
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
@@ -407,10 +395,10 @@ def check_neighbor_rooms():
 
 
 #Laster inn lyder
-bgm = pygame.mixer.Sound('bgMusic.mp3') #importerer lydfilen for bakgrunnsmusikk
+bgm = pygame.mixer.Sound('musiiic.mp3') #importerer lydfilen for bakgrunnsmusikk
 bgm.set_volume(0.3) #halvverer volumet
-bmg_delay = 16000
-last_bgm = -16000
+bmg_delay = 17000
+last_bgm = -19000
 
 s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
 s_fx.set_volume(0.9)
