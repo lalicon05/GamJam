@@ -13,6 +13,12 @@ pygame.display.set_caption(r"Kjeller-eventyr") #navnet på spillet
 clock = pygame.time.Clock()
 running = True
 
+#Konstante variabler
+spiller_mot_høyre = (0, 0, 24 , 24)
+spiller_mot_venstre = (72, 0, 96 , 24)
+spiller_oppover = (24, 0, 48 , 24)
+spiller_nedover = (48, 0, 72 , 24)
+
 #objekter / klasser ---------------------------------------------------------------------------------------------------------
 
 #Klasse for spillerobjekt
@@ -37,44 +43,40 @@ class Spiller:
         self.speed = 6
         self.attackspeed = 3
         self.last_attack = 0
-        self.facing_r = 1
-        self.facing_u = 1
+        self.facing_right = 1
+        self.facing_down = 1
 
         #alt som har ,med å tegne spriten å gjøre
         self.sheet = sprite_sheet_image
-        self.sprite_w = 24
-        self.sprite_h = 24
+        self.sprite_width= 24
+        self.sprite_heigth = 24
         self.scale = 1.4
 
-        self.sprite_face_left = (0, 0, 24 , 24)
-        self.sprite_face_right = (25, 0, 48 , 24)
-        self.sprite_face_up = (49, 0, 72 , 24)
-        self.sprite_face_down =(73, 0, 96 , 24)
-        self.TheSprite = (0, 0, 24 , 24)
+        self.TheSprite = spiller_mot_høyre
 
-        self.rect = pygame.Rect(self.x - self.size / 2, self.y - self.size / 2, self.size, self.size)
+        self.rect = pygame.Rect((self.x - self.size, self.y - self.size), (self.size, self.size))
 
     #funksjon for å tegne seg selv
     def draw(self):
         
         #displaye riktig sprite i forhold til retningen spiller ser
-        if(self.facing_r == 1) and (self.facing_u == 0):
-            self.TheSprite = (0, 0, 24 , 24)
-        if(self.facing_r == -1) and (self.facing_u == 0):
-            self.TheSprite = (72, 0, 96 , 24)
-        if(self.facing_r == 0) and (self.facing_u == -1):
-            self.TheSprite = (24, 0, 48 , 24)
-        if(self.facing_r == 0) and (self.facing_u == 1):
-            self.TheSprite = (48, 0, 72 , 24)
+        if(self.facing_right == 1) and (self.facing_down == 0):
+            self.TheSprite = spiller_mot_høyre
+        if(self.facing_right == -1) and (self.facing_down == 0):
+            self.TheSprite = spiller_mot_venstre
+        if(self.facing_right == 0) and (self.facing_down == -1):
+            self.TheSprite = spiller_oppover
+        if(self.facing_right == 0) and (self.facing_down == 1):
+            self.TheSprite = spiller_nedover
         self.rect = pygame.Rect(self.x - self.size / 2, self.y - self.size / 2, self.size, self.size) #rektangel som skal virke som hitboks
         pygame.draw.rect(screen, 'black', self.rect)
         
         #ordner selve bildet
-        self.image = pygame.Surface((self.sprite_w, self.sprite_h)).convert_alpha()
+        self.image = pygame.Surface((self.sprite_width, self.sprite_heigth)).convert_alpha()
         self.image.blit(self.sheet, (0, 0), self.TheSprite) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
-        self.image = pygame.transform.scale(self.image, (self.sprite_w * self.scale, self.sprite_h * self.scale)) #lar deg skalere bildet etter ønske
+        self.image = pygame.transform.scale(self.image, (self.sprite_width* self.scale, self.sprite_heigth * self.scale)) #lar deg skalere bildet etter ønske
         self.image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
-        screen.blit(self.image, (self.x - self.sprite_w*self.scale / 2, self.y - self.sprite_h*self.scale / 2))
+        screen.blit(self.image, (self.x - self.sprite_width*self.scale / 2, self.y - self.sprite_heigth*self.scale / 2))
 
 
 #klasse for magisk/prosjektil angrep
@@ -457,26 +459,26 @@ while running:
     if keys[pygame.K_d] and (spiller.x + spiller.speed) < screen.get_width() - 16:
         spiller.retning[0] += 1
         spiller.skyt_retning[0] = 1
-        spiller.facing_r = 1
-        spiller.facing_u = 0
+        spiller.facing_right = 1
+        spiller.facing_down = 0
 
     if(keys[pygame.K_a]) and ((spiller.x - spiller.speed) > 16): 
         spiller.retning[0] -= 1
         spiller.skyt_retning[0] = -1
-        spiller.facing_r = -1
-        spiller.facing_u = 0
+        spiller.facing_right = -1
+        spiller.facing_down = 0
 
     if(keys[pygame.K_s]) and((spiller.y + spiller.speed) < screen.get_height() - 16):
         spiller.retning[1] += 1
         spiller.skyt_retning[1] = 1
-        spiller.facing_r = 0
-        spiller.facing_u = 1
+        spiller.facing_right = 0
+        spiller.facing_down = 1
 
     if(keys[pygame.K_w]) and ((spiller.y - spiller.speed) > 16): 
         spiller.retning[1] -= 1
         spiller.skyt_retning[1] = -1
-        spiller.facing_r = 0
-        spiller.facing_u = -1
+        spiller.facing_right = 0
+        spiller.facing_down = -1
 
     if(keys[pygame.K_SPACE]): #angriper 
         if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
@@ -486,7 +488,7 @@ while running:
                 spiller.last_attack = time
                 s_fx.play()
             else:
-                spiller.skyt_retning = [spiller.facing_r, spiller.facing_u]
+                spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
                 prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
                 spiller.last_attack = time
                 s_fx.play()
