@@ -232,105 +232,8 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def get_tile_position(self, row, col): #henter posisjon til tile
         return col * 48, row * 48
 
-
-#Funksjoner-------------------------------------------------------------------------------------------------------
-#fonts og størrelse til tekst
-text_font_s = pygame.font.SysFont("Arial", 24) # liten tekst
-text_font_m = pygame.font.SysFont("Arial", 36) # Medium tekst
-text_font_l = pygame.font.SysFont("Arial", 48) # Stor tekst
-#Funksjon for å skrive tekst enklere
-def draw_text(text : str, font : pygame.font.Font, text_col : pygame.Color, x : int, y : int): #Funksjon som brukes for å lage tekst.
-    img = font.render(text, True, text_col)
-    tekst_rect = img.get_rect(center=(x, y))
-    screen.blit(img, tekst_rect)
-
 #laster spritesheet
 sprite_sheet_image = pygame.image.load('spritesheet.png').convert_alpha()
-#Funksjon for å kunne tegne enhver del av sheetet
-def get_image(sheet, width, height, scale, color):
-    image = pygame.Surface((width, height)).convert_alpha()
-    image.blit(sheet, (0, 0), (0, 0, 24 , 24)) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
-    image = pygame.transform.scale(image, (width * scale, height * scale)) #lar deg skalere bildet etter ønske
-    image.set_colorkey(color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
-    return image
-
-#spiller kollidere med vegg
-def player_collide_wall(new_x, new_y):
-    #sjekker om spiller kollidere på x-akse
-    player_rect_x = pygame.Rect(new_x - spiller.size / 2, spiller.y - spiller.size / 2, spiller.size, spiller.size)
-    wall_rects_x = rommene[active_room].draw()  # Henter vegg tiles fra rommet for å kollidere med de
-
-    collision_detected_x = False
-
-    for wall_rect_x in wall_rects_x:
-        if player_rect_x.colliderect(wall_rect_x): #sjekker om spiller kolliderer med vegg på x-akse
-            new_x = spiller.x #flytter ikke spiller videre
-            collision_detected_x = True 
-
-    # sjekker om kolliderer på y-aksen
-    player_rect_y = pygame.Rect(spiller.x - spiller.size / 2, new_y - spiller.size / 2, spiller.size, spiller.size)
-    wall_rects_y = rommene[active_room].draw()  # Get the rectangles representing walls along the y-axis
-
-    collision_detected_y = False
-
-    for wall_rect_y in wall_rects_y:
-        if player_rect_y.colliderect(wall_rect_y): #sjekker om spiller kolliderer med vegg på y-akse
-            new_y = spiller.y #Hindrer spiller i å bevege seg videre
-            collision_detected_y = True
-
-    if not collision_detected_x:
-        spiller.x = new_x #beveger seom vanlig om det ikke er en kollisjon langs x-akse
-
-    if not collision_detected_y:
-        spiller.y = new_y #Beveger seg som vanlig om det ikke er en kollisjon langs y-akse
-
-#sjekker om spiller er på en dør
-def door_handle(player_rect, door_rects):
-    for door_rect in door_rects:
-        if door_rect.contains(player_rect):
-            return True
-    return False
-
-def which_door(playerx, playery):
-    if (playerx > (screen.get_width() - 96)):
-        return 'r'
-    if (playerx < (96)):
-        return 'l'
-    if (playery > (screen.get_height() - 96)):
-        return 'd'
-    if (playery < (96)):
-        return 'u'
-    else:
-        return "no door"
-
-#funksjon for å sjekke om det er ett rom i en retning og legger til en dør/vegg ut i fra resultatet
-def check_neighbor_rooms():
-    room_pos = rommene[active_room].room_coords
-    r = False
-    #sjekker om det er ett rom til høyre
-    for room in range(len(rommene)):
-        if(rommene[room].room_coords == (room_pos[0] + 1, room_pos[1])):
-            rommene[room].tileset[6][15] == 3
-            r = True
-        if r != True:
-            rommene[room].tileset[6][15] == 1
-
-
-#Laster inn lyder
-bgm = pygame.mixer.Sound('bgMusic.mp3') #importerer lydfilen for bakgrunnsmusikk
-bgm.set_volume(0.3) #halvverer volumet
-bmg_delay = 16000
-last_bgm = -16000
-
-s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
-s_fx.set_volume(0.9)
-
-b_fx = pygame.mixer.Sound('boom.mp3')
-b_fx.set_volume(0.25)
-
-#Lager objekter -------------------------------------------------------------------------------------
-spiller = Spiller()
-prosjektiler = []
 
 rommene = [] #liste over rom
 rommene.append(Tileset([
@@ -417,6 +320,105 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
                 ], (0, 1)))
+
+
+#Funksjoner-------------------------------------------------------------------------------------------------------
+#fonts og størrelse til tekst
+text_font_s = pygame.font.SysFont("Arial", 24) # liten tekst
+text_font_m = pygame.font.SysFont("Arial", 36) # Medium tekst
+text_font_l = pygame.font.SysFont("Arial", 48) # Stor tekst
+#Funksjon for å skrive tekst enklere
+def draw_text(text : str, font : pygame.font.Font, text_col : pygame.Color, x : int, y : int): #Funksjon som brukes for å lage tekst.
+    img = font.render(text, True, text_col)
+    tekst_rect = img.get_rect(center=(x, y))
+    screen.blit(img, tekst_rect)
+
+
+#Funksjon for å kunne tegne enhver del av sheetet
+def get_image(sheet, width, height, scale, color):
+    image = pygame.Surface((width, height)).convert_alpha()
+    image.blit(sheet, (0, 0), (0, 0, 24 , 24)) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
+    image = pygame.transform.scale(image, (width * scale, height * scale)) #lar deg skalere bildet etter ønske
+    image.set_colorkey(color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
+    return image
+
+#spiller kollidere med vegg
+def player_collide_wall(new_x, new_y):
+    #sjekker om spiller kollidere på x-akse
+    player_rect_x = pygame.Rect(new_x - spiller.size / 2, spiller.y - spiller.size / 2, spiller.size, spiller.size)
+    wall_rects_x = rommene[active_room].draw()  # Henter vegg tiles fra rommet for å kollidere med de
+
+    collision_detected_x = False
+
+    for wall_rect_x in wall_rects_x:
+        if player_rect_x.colliderect(wall_rect_x): #sjekker om spiller kolliderer med vegg på x-akse
+            new_x = spiller.x #flytter ikke spiller videre
+            collision_detected_x = True 
+
+    # sjekker om kolliderer på y-aksen
+    player_rect_y = pygame.Rect(spiller.x - spiller.size / 2, new_y - spiller.size / 2, spiller.size, spiller.size)
+    wall_rects_y = rommene[active_room].draw()  # Get the rectangles representing walls along the y-axis
+
+    collision_detected_y = False
+
+    for wall_rect_y in wall_rects_y:
+        if player_rect_y.colliderect(wall_rect_y): #sjekker om spiller kolliderer med vegg på y-akse
+            new_y = spiller.y #Hindrer spiller i å bevege seg videre
+            collision_detected_y = True
+
+    if not collision_detected_x:
+        spiller.x = new_x #beveger seom vanlig om det ikke er en kollisjon langs x-akse
+
+    if not collision_detected_y:
+        spiller.y = new_y #Beveger seg som vanlig om det ikke er en kollisjon langs y-akse
+
+#sjekker om spiller er på en dør
+def door_handle(player_rect, door_rects):
+    for door_rect in door_rects:
+        if door_rect.contains(player_rect):
+            return True
+    return False
+
+def which_door(playerx, playery):
+    if (playerx > (screen.get_width() - 96)):
+        return 'r'
+    if (playerx < (96)):
+        return 'l'
+    if (playery > (screen.get_height() - 96)):
+        return 'd'
+    if (playery < (96)):
+        return 'u'
+    else:
+        return "no door"
+
+#funksjon for å sjekke om det er ett rom i en retning og legger til en dør/vegg ut i fra resultatet
+def check_neighbor_rooms():
+    room_pos = rommene[active_room].room_coords
+    r = False
+    #sjekker om det er ett rom til høyre
+    for room in range(len(rommene)):
+        if(rommene[room].room_coords == (room_pos[0] + 1, room_pos[1])):
+            rommene[room].tileset[6][15] == 3
+            r = True
+        if r != True:
+            rommene[room].tileset[6][15] == 1
+
+
+#Laster inn lyder
+bgm = pygame.mixer.Sound('bgMusic.mp3') #importerer lydfilen for bakgrunnsmusikk
+bgm.set_volume(0.3) #halvverer volumet
+bmg_delay = 16000
+last_bgm = -16000
+
+s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
+s_fx.set_volume(0.9)
+
+b_fx = pygame.mixer.Sound('boom.mp3')
+b_fx.set_volume(0.25)
+
+#Lager objekter -------------------------------------------------------------------------------------
+spiller = Spiller()
+prosjektiler = []
 
 
 
