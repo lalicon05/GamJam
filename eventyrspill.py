@@ -30,6 +30,7 @@ class Spiller:
         self.hp = self.max_hp
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
+        self.alive = True
 
         #alt som har med bevegelse og retning å gjøre
         self.retning = [0, 0]
@@ -162,8 +163,6 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
 
-
-
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
@@ -224,6 +223,10 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
 
 #laster spritesheet
 sprite_sheet_image = pygame.image.load('spritesheet.png').convert_alpha()
+
+#Laster Game-over skjerm
+game_over_img = pygame.image.load('sad_fog.jpg').convert_alpha()
+
 
 rommene = [] #liste over rom
 rommene.append(Tileset([
@@ -400,6 +403,9 @@ bgm.set_volume(0.3) #halvverer volumet
 bmg_delay = 17000
 last_bgm = -19000
 
+gmover = pygame.mixer.Sound('gameover.mp3')
+gmover.set_volume(0.5)
+
 s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
 s_fx.set_volume(0.9)
 
@@ -428,152 +434,228 @@ time = 0
 
 #Kjører spillet -------------------------------------------------------------
 while running:
-    if(time - last_bgm > bmg_delay): #spiller av musikken
-        bgm.play()
-        last_bgm = time
+    if spiller.alive == True:
+        if(time - last_bgm > bmg_delay): #spiller av musikken
+            bgm.play()
+            last_bgm = time
 
-    # Avslutter løkken
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    #tar inn inputs
-    keys = pygame.key.get_pressed()
+        # Avslutter løkken
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+        #tar inn inputs
+        keys = pygame.key.get_pressed()
 
-    spiller.retning = [0, 0]
-    spiller.skyt_retning = [0, 0]
-
-
-    #Inputs
-    if keys[pygame.K_d] and (spiller.x + spiller.speed) < screen.get_width() - 16:
-        spiller.retning[0] += 1
-        spiller.skyt_retning[0] = 1
-        spiller.facing_right = 1
-        spiller.facing_down = 0
-
-    if(keys[pygame.K_a]) and ((spiller.x - spiller.speed) > 16): 
-        spiller.retning[0] -= 1
-        spiller.skyt_retning[0] = -1
-        spiller.facing_right = -1
-        spiller.facing_down = 0
-
-    if(keys[pygame.K_s]) and((spiller.y + spiller.speed) < screen.get_height() - 16):
-        spiller.retning[1] += 1
-        spiller.skyt_retning[1] = 1
-        spiller.facing_right = 0
-        spiller.facing_down = 1
-
-    if(keys[pygame.K_w]) and ((spiller.y - spiller.speed) > 16): 
-        spiller.retning[1] -= 1
-        spiller.skyt_retning[1] = -1
-        spiller.facing_right = 0
-        spiller.facing_down = -1
-
-    if(keys[pygame.K_SPACE]): #angriper 
-        if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
-            if(spiller.retning != [0, 0]):
-                spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
-                prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
-                spiller.last_attack = time
-                s_fx.play()
-            else:
-                spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
-                prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
-                spiller.last_attack = time
-                s_fx.play()
-
-    if(keys[pygame.K_RETURN]):
-        enter = True
-
-    if spiller.retning[0] != 0 and spiller.retning[1] != 0: #fikse hastighetsproblemet med å bevege seg diagonalt
-        new_x = spiller.x + spiller.retning[0] * spiller.speed / math.sqrt(2)
-        new_y = spiller.y + spiller.retning[1] * spiller.speed / math.sqrt(2)
-    else:
-        new_x = spiller.x + spiller.retning[0] * spiller.speed
-        new_y = spiller.y + spiller.retning[1] * spiller.speed
-
-    if new_room: #Sjekker
-        active_coords = rommene[active_room].get_room_coords()
-        new_room = False
-
-    player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
-    rommene[active_room].draw() #tegner rommet
+        spiller.retning = [0, 0]
+        spiller.skyt_retning = [0, 0]
 
 
-    #sjekker om man er i en dør mens man trykker enter
-    if(enter == True):
-        if time - last_door >= 1000: 
-            door_rects = rommene[active_room].get_door_rects() #hvis man trykker enter flytt til neste rom
-            if door_handle(spiller.rect, door_rects):
-                if(which_door(new_x, new_y) == 'r'):
-                    for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
-                            active_room = room_index
-                            print(rommene[active_room].room_coords)
-                            spiller.x = 32
-                            spiller.y = spiller.y
-                            rommene[room_index].place_doors(rommene)
-                            new_room = True
-                if(which_door(new_x, new_y) == 'l'):
-                    for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
-                            active_room = room_index
-                            print(rommene[active_room].room_coords)
-                            spiller.x = screen.get_width() - 32
-                            spiller.y = spiller.y
-                            rommene[room_index].place_doors(rommene)
-                            new_room = True
-                if(which_door(new_x, new_y) == 'u'):
-                    for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
-                            active_room = room_index
-                            print(rommene[active_room].room_coords)
-                            spiller.x = spiller.x
-                            spiller.y = screen.get_height() - 32
-                            rommene[room_index].place_doors(rommene)
-                            new_room = True
-                if(which_door(new_x, new_y) == 'd'):
-                    for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
-                            active_room = room_index
-                            print(rommene[active_room].room_coords)
-                            spiller.x = spiller.x
-                            spiller.y = 32
-                            rommene[room_index].place_doors(rommene)
-                            new_room = True
-                last_door = time
-        enter = False
+        #Inputs
+        if keys[pygame.K_d] and (spiller.x + spiller.speed) < screen.get_width() - 16:
+            spiller.retning[0] += 1
+            spiller.skyt_retning[0] = 1
+            spiller.facing_right = 1
+            spiller.facing_down = 0
 
-    #oppdaterer alle prosjektiler
-    for prosjektil in prosjektiler:
-        prosjektil.update() #oppdaterer prosjektiler
-        for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
-            if pygame.Rect.colliderect(prosjektil.rect, wall):
-                try:
-                    prosjektiler.pop(prosjektiler.index(prosjektil))
-                    b_fx.play()
-                except:
-                    print("did not")
+        if(keys[pygame.K_a]) and ((spiller.x - spiller.speed) > 16): 
+            spiller.retning[0] -= 1
+            spiller.skyt_retning[0] = -1
+            spiller.facing_right = -1
+            spiller.facing_down = 0
 
-        if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis prosjektiler går utenfor skjermen på sidene
-            prosjektiler.pop(prosjektiler.index(prosjektil))
-            b_fx.play()
-        if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
-            prosjektiler.pop(prosjektiler.index(prosjektil))
-            b_fx.play()
+        if(keys[pygame.K_s]) and((spiller.y + spiller.speed) < screen.get_height() - 16):
+            spiller.retning[1] += 1
+            spiller.skyt_retning[1] = 1
+            spiller.facing_right = 0
+            spiller.facing_down = 1
 
-        if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
-            prosjektiler.pop(prosjektiler.index(prosjektil))
+        if(keys[pygame.K_w]) and ((spiller.y - spiller.speed) > 16): 
+            spiller.retning[1] -= 1
+            spiller.skyt_retning[1] = -1
+            spiller.facing_right = 0
+            spiller.facing_down = -1
         
+        if(keys[pygame.K_ESCAPE]):
+            spiller.alive = False
+            gmover.play()
 
-    #tegner spiller i sin posisjon
-    spiller.draw()
+        if(keys[pygame.K_SPACE]): #angriper 
+            if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
+                if(spiller.retning != [0, 0]):
+                    spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
+                    prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller.last_attack = time
+                    s_fx.play()
+                else:
+                    spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
+                    prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller.last_attack = time
+                    s_fx.play()
 
-    # Oppdaterer hele skjermen
-    pygame.display.flip()
+        if(keys[pygame.K_RETURN]):
+            enter = True
 
-    # Forsikrer at spillet kjører i maksimalt 60 FPS.
-    time = pygame.time.get_ticks()
-    clock.tick(60)
+        if spiller.retning[0] != 0 and spiller.retning[1] != 0: #fikse hastighetsproblemet med å bevege seg diagonalt
+            new_x = spiller.x + spiller.retning[0] * spiller.speed / math.sqrt(2)
+            new_y = spiller.y + spiller.retning[1] * spiller.speed / math.sqrt(2)
+        else:
+            new_x = spiller.x + spiller.retning[0] * spiller.speed
+            new_y = spiller.y + spiller.retning[1] * spiller.speed
+
+        if new_room: #Sjekker
+            active_coords = rommene[active_room].get_room_coords()
+            new_room = False
+
+
+
+        player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
+        rommene[active_room].draw() #tegner rommet
+
+
+        #sjekker om man er i en dør mens man trykker enter
+        if(enter == True):
+            if time - last_door >= 1000: 
+                door_rects = rommene[active_room].get_door_rects() #hvis man trykker enter flytt til neste rom
+                if door_handle(spiller.rect, door_rects):
+                    if(which_door(new_x, new_y) == 'r'):
+                        for room_index in range(len(rommene)):
+                            if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
+                                active_room = room_index
+                                print(rommene[active_room].room_coords)
+                                spiller.x = 32
+                                spiller.y = spiller.y
+                                rommene[room_index].place_doors(rommene)
+                                new_room = True
+                    if(which_door(new_x, new_y) == 'l'):
+                        for room_index in range(len(rommene)):
+                            if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
+                                active_room = room_index
+                                print(rommene[active_room].room_coords)
+                                spiller.x = screen.get_width() - 32
+                                spiller.y = spiller.y
+                                rommene[room_index].place_doors(rommene)
+                                new_room = True
+                    if(which_door(new_x, new_y) == 'u'):
+                        for room_index in range(len(rommene)):
+                            if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
+                                active_room = room_index
+                                print(rommene[active_room].room_coords)
+                                spiller.x = spiller.x
+                                spiller.y = screen.get_height() - 32
+                                rommene[room_index].place_doors(rommene)
+                                new_room = True
+                    if(which_door(new_x, new_y) == 'd'):
+                        for room_index in range(len(rommene)):
+                            if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
+                                active_room = room_index
+                                print(rommene[active_room].room_coords)
+                                spiller.x = spiller.x
+                                spiller.y = 32
+                                rommene[room_index].place_doors(rommene)
+                                new_room = True
+                    last_door = time
+            enter = False
+
+        #oppdaterer alle prosjektiler
+        for prosjektil in prosjektiler:
+            prosjektil.update() #oppdaterer prosjektiler
+            for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
+                if pygame.Rect.colliderect(prosjektil.rect, wall):
+                    try:
+                        prosjektiler.pop(prosjektiler.index(prosjektil))
+                        b_fx.play()
+                    except:
+                        print("did not")
+
+            if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis prosjektiler går utenfor skjermen på sidene
+                prosjektiler.pop(prosjektiler.index(prosjektil))
+                b_fx.play()
+            if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
+                prosjektiler.pop(prosjektiler.index(prosjektil))
+                b_fx.play()
+
+            if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
+                prosjektiler.pop(prosjektiler.index(prosjektil))
+            
+
+        #tegner spiller i sin posisjon
+        spiller.draw()
+
+        #Skriver tekst
+        draw_text(f"Health: {spiller.hp}", text_font_s, 'white', 40, 20)
+
+        # Oppdaterer hele skjermen
+        pygame.display.flip()
+
+        # Forsikrer at spillet kjører i maksimalt 60 FPS.
+        time = pygame.time.get_ticks()
+        clock.tick(60)
+    else:
+        bgm.set_volume(0)
+        gmover.set_volume(1)
+        if(time - last_bgm > 6000): #spiller av musikken
+            gmover.play()
+            last_bgm = time
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+
+        keys = pygame.key.get_pressed()
+
+        if(keys[pygame.K_RETURN]):
+            pygame.mixer.quit()
+            pygame.mixer.pre_init(44100, -16, 2, 512)
+            mixer.init()
+            
+            spiller.alive = True
+            gmover.set_volume(0)
+
+            bgm.set_volume(0.3)
+            last_bgm = time
+            bgm.play()
+
+            last_door = 0
+            enter = False
+            active_room = 0
+
+            spiller.x = screen.get_width() / 2
+            spiller.y = screen.get_height() / 2
+            spiller.max_hp = 3
+            spiller.hp = 3
+            spiller.retning = [0, 0]
+            spiller.skyt_retning = [0, 0]
+            spiller.size = 25
+            spiller.speed = 6
+            spiller.attackspeed = 3
+
+
+            active_coords = (0, 0)
+            rommene[active_room].draw()
+            rommene[active_room].place_doors(rommene)
+
+            new_room = False
+
+            time = 0
+
+
+
+        #ordner selve bildet
+        image = pygame.Surface((screen.get_width(), screen.get_height())).convert_alpha()
+        image.blit(game_over_img, (0, 0), (0, 100, game_over_img.get_width(), game_over_img.get_height())) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
+        image = pygame.transform.scale(image, (screen.get_width() + 100, screen.get_height())) #lar deg skalere bildet etter ønske
+        #image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
+        screen.blit(image, (0, 0))
+
+        draw_text("Game Over!", text_font_l, 'white', screen.get_width() / 2, screen.get_height() / 2)
+        draw_text(r"Press Enter to restart", text_font_s, 'white', screen.get_width() / 2, screen.get_height() / 1.7)
+
+        pygame.display.flip()
+
+        time = pygame.time.get_ticks()
+        clock.tick(60)
 
 # Avslutter spillet
 pygame.quit()
