@@ -103,25 +103,12 @@ class Magic:
 
 
 class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
-    def __init__(self, tileset, room_coords):
-        """ Preset
-        [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]
-        """
+    def __init__(self, tileset, room_coordinates):
+       #Det skal være et 10*16 to-dimensjonal liste
         self.sheet = sprite_sheet_image #laster inn sprite -sheet
         self.tileset = tileset #
 
-        self.room_coords = (room_coords)
+        self.room_coordinates = (room_coordinates)
         self.door_r = False #booleans for å velge hvilke dører ett rom skal inneholde
         self.door_l = False
         self.door_u = False
@@ -132,8 +119,8 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.door_locked = (96, 49, 119, 72)
         self.door_unlocked = (96, 72, 119, 96)
     
-    def get_room_coords(self):
-        return self.room_coords
+    def get_room_coordinates(self):
+        return self.room_coordinates
     
     def get_door_rects(self):
         return self.door_rects 
@@ -145,17 +132,17 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.door_d = False
 
         for rom in range(len(room_list)):
-            #sjekker rom til høyre (rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1])
-            if(self.room_coords[0] + 1, self.room_coords[1]) == (room_list[rom].room_coords):
+            #sjekker rom til høyre (rommene[room_index].room_coordinates) == (active_coords[0] + 1,active_coords[1])
+            if(self.room_coordinates[0] + 1, self.room_coordinates[1]) == (room_list[rom].room_coordinates):
                 self.door_r = True
             #sjekker rom til venstre
-            if(self.room_coords[0] - 1, self.room_coords[1]) == (room_list[rom].room_coords):
+            if(self.room_coordinates[0] - 1, self.room_coordinates[1]) == (room_list[rom].room_coordinates):
                 self.door_l = True
             #sjekker rom nedover
-            if(self.room_coords[0], self.room_coords[1] - 1) == (room_list[rom].room_coords):
+            if(self.room_coordinates[0], self.room_coordinates[1] - 1) == (room_list[rom].room_coordinates):
                 self.door_d = True
             #sjekker rom oppover
-            if(self.room_coords[0], self.room_coords[1] + 1) == (room_list[rom].room_coords):
+            if(self.room_coordinates[0], self.room_coordinates[1] + 1) == (room_list[rom].room_coordinates):
                 self.door_u = True
 
     def draw(self):
@@ -167,11 +154,11 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                 #bestemmer hvilken tile som skal plasseres
                 if(self.tileset[row][col] == 0):
                     self.TheTile = self.ground
-                if(self.tileset[row][col]) == 1:
+                elif(self.tileset[row][col]) == 1:
                     self.TheTile = self.wall
-                if(self.tileset[row][col]) == 2:
+                elif(self.tileset[row][col]) == 2:
                     self.TheTile = self.door_locked
-                if(self.tileset[row][col]) == 3:
+                elif(self.tileset[row][col]) == 3:
                     self.TheTile = self.door_unlocked
 
                 if(col == 0) or (col == 15): #sørger for at alle kanter er vegger
@@ -199,9 +186,9 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
 
 
                 image = pygame.Surface((24, 24)).convert_alpha() #ett surface å tegne spriten til veggen på
-                image.blit(self.sheet, (0, 0), self.TheTile) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
+                image.blit(self.sheet, (0, 0), self.TheTile) 
                 image = pygame.transform.scale(image, (48, 48)) #lar deg skalere bildet etter ønske
-                image.set_colorkey('BLACK') #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
+                image.set_colorkey('BLACK') #Gjør pixler i fargen du har valgt gjennomsiktige. 
                 screen.blit(image, (col*48, row*48))
 
                 if self.get_tile_type(row, col) == 3:
@@ -312,9 +299,9 @@ rommene.append(Tileset([
 
 #Funksjoner-------------------------------------------------------------------------------------------------------
 #fonts og størrelse til tekst
-text_font_s = pygame.font.SysFont("Arial", 24) # liten tekst
-text_font_m = pygame.font.SysFont("Arial", 36) # Medium tekst
-text_font_l = pygame.font.SysFont("Arial", 48) # Stor tekst
+text_font_small = pygame.font.SysFont("Arial", 24) # liten tekst
+text_font_medium = pygame.font.SysFont("Arial", 36) # Medium tekst
+text_font_large = pygame.font.SysFont("Arial", 48) # Stor tekst
 #Funksjon for å skrive tekst enklere
 def draw_text(text : str, font : pygame.font.Font, text_col : pygame.Color, x : int, y : int): #Funksjon som brukes for å lage tekst.
     img = font.render(text, True, text_col)
@@ -381,11 +368,11 @@ def which_door(playerx, playery):
 
 #funksjon for å sjekke om det er ett rom i en retning og legger til en dør/vegg ut i fra resultatet
 def check_neighbor_rooms():
-    room_pos = rommene[active_room].room_coords
+    room_pos = rommene[active_room].room_coordinates
     r = False
     #sjekker om det er ett rom til høyre
     for room in range(len(rommene)):
-        if(rommene[room].room_coords == (room_pos[0] + 1, room_pos[1])):
+        if(rommene[room].room_coordinates == (room_pos[0] + 1, room_pos[1])):
             rommene[room].tileset[6][15] == 3
             r = True
         if r != True:
@@ -490,7 +477,7 @@ while running:
         new_y = spiller.y + spiller.retning[1] * spiller.speed
 
     if new_room: #Sjekker
-        active_coords = rommene[active_room].get_room_coords()
+        active_coords = rommene[active_room].get_room_coordinates()
         new_room = False
 
     player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
@@ -504,36 +491,36 @@ while running:
             if door_handle(spiller.rect, door_rects):
                 if(which_door(new_x, new_y) == 'r'):
                     for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
+                        if(rommene[room_index].room_coordinates) == (active_coords[0] + 1,active_coords[1]):
                             active_room = room_index
-                            print(rommene[active_room].room_coords)
+                            print(rommene[active_room].room_coordinates)
                             spiller.x = 32
                             spiller.y = spiller.y
                             rommene[room_index].place_doors(rommene)
                             new_room = True
                 if(which_door(new_x, new_y) == 'l'):
                     for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
+                        if(rommene[room_index].room_coordinates) == (active_coords[0] - 1,active_coords[1]):
                             active_room = room_index
-                            print(rommene[active_room].room_coords)
+                            print(rommene[active_room].room_coordinates)
                             spiller.x = screen.get_width() - 32
                             spiller.y = spiller.y
                             rommene[room_index].place_doors(rommene)
                             new_room = True
                 if(which_door(new_x, new_y) == 'u'):
                     for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
+                        if(rommene[room_index].room_coordinates) == (active_coords[0],active_coords[1] + 1):
                             active_room = room_index
-                            print(rommene[active_room].room_coords)
+                            print(rommene[active_room].room_coordinates)
                             spiller.x = spiller.x
                             spiller.y = screen.get_height() - 32
                             rommene[room_index].place_doors(rommene)
                             new_room = True
                 if(which_door(new_x, new_y) == 'd'):
                     for room_index in range(len(rommene)):
-                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
+                        if(rommene[room_index].room_coordinates) == (active_coords[0],active_coords[1] - 1):
                             active_room = room_index
-                            print(rommene[active_room].room_coords)
+                            print(rommene[active_room].room_coordinates)
                             spiller.x = spiller.x
                             spiller.y = 32
                             rommene[room_index].place_doors(rommene)
