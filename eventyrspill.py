@@ -79,9 +79,12 @@ class Spiller:
         self.image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
         screen.blit(self.image, (self.x - self.sprite_width*self.scale / 2, self.y - self.sprite_heigth*self.scale / 2))
 
-
+class Fiende():
+    def __init__(self, type, koordinater):
+        a = 1
+    
 #klasse for magisk/prosjektil angrep
-class Magic:
+class Magi:
     def __init__(self, retning, x, y):
         self.damage = 1
         self.speed = 10
@@ -148,7 +151,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def draw(self):
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
-        
+
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
@@ -470,12 +473,12 @@ while running:
             if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
                 if(spiller.retning != [0, 0]):
                     spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
-                    prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
+                    prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
                     spiller.last_attack = time
                     s_fx.play()
                 else:
                     spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
-                    prosjektiler.append(Magic(spiller.skyt_retning, spiller.x, spiller.y))
+                    prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
                     spiller.last_attack = time
                     s_fx.play()
 
