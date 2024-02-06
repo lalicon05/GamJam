@@ -105,20 +105,6 @@ class Magic:
 
 class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def __init__(self, tileset, room_coords):
-        """ Preset
-        [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        ]
-        """
         self.sheet = sprite_sheet_image #laster inn sprite -sheet
         self.tileset = tileset #
 
@@ -162,12 +148,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def draw(self):
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
-
         
-
-
-
-
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
