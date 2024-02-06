@@ -317,9 +317,9 @@ rommene.append(Tileset([
 
 #Funksjoner-------------------------------------------------------------------------------------------------------
 #fonts og størrelse til tekst
-text_font_s = pygame.font.SysFont("Arial", 24) # liten tekst
-text_font_m = pygame.font.SysFont("Arial", 36) # Medium tekst
-text_font_l = pygame.font.SysFont("Arial", 48) # Stor tekst
+text_font_small = pygame.font.SysFont("Arial", 24) # liten tekst
+text_font_medium = pygame.font.SysFont("Arial", 36) # Medium tekst
+text_font_large = pygame.font.SysFont("Arial", 48) # Stor tekst
 #Funksjon for å skrive tekst enklere
 def draw_text(text : str, font : pygame.font.Font, text_col : pygame.Color, x : int, y : int): #Funksjon som brukes for å lage tekst.
     img = font.render(text, True, text_col)
@@ -435,7 +435,7 @@ time = 0
 #Kjører spillet -------------------------------------------------------------
 while running:
     if spiller.alive == True:
-        if(time - last_bgm > bmg_delay): #spiller av musikken
+        if(time - last_bgm >= bmg_delay): #spiller av musikken
             bgm.play()
             last_bgm = time
 
@@ -514,47 +514,45 @@ while running:
 
 
         #sjekker om man er i en dør mens man trykker enter
-        if(enter == True):
+        if(enter == True) and (door_handle(spiller.rect, rommene[active_room].get_door_rects())):
             if time - last_door >= 1000: 
-                door_rects = rommene[active_room].get_door_rects() #hvis man trykker enter flytt til neste rom
-                if door_handle(spiller.rect, door_rects):
-                    if(which_door(new_x, new_y) == 'r'):
-                        for room_index in range(len(rommene)):
-                            if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
-                                active_room = room_index
-                                print(rommene[active_room].room_coords)
-                                spiller.x = 32
-                                spiller.y = spiller.y
-                                rommene[room_index].place_doors(rommene)
-                                new_room = True
-                    if(which_door(new_x, new_y) == 'l'):
-                        for room_index in range(len(rommene)):
-                            if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
-                                active_room = room_index
-                                print(rommene[active_room].room_coords)
-                                spiller.x = screen.get_width() - 32
-                                spiller.y = spiller.y
-                                rommene[room_index].place_doors(rommene)
-                                new_room = True
-                    if(which_door(new_x, new_y) == 'u'):
-                        for room_index in range(len(rommene)):
-                            if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
-                                active_room = room_index
-                                print(rommene[active_room].room_coords)
-                                spiller.x = spiller.x
-                                spiller.y = screen.get_height() - 32
-                                rommene[room_index].place_doors(rommene)
-                                new_room = True
-                    if(which_door(new_x, new_y) == 'd'):
-                        for room_index in range(len(rommene)):
-                            if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
-                                active_room = room_index
-                                print(rommene[active_room].room_coords)
-                                spiller.x = spiller.x
-                                spiller.y = 32
-                                rommene[room_index].place_doors(rommene)
-                                new_room = True
-                    last_door = time
+                if(which_door(new_x, new_y) == 'r'):
+                    for room_index in range(len(rommene)):
+                        if(rommene[room_index].room_coords) == (active_coords[0] + 1,active_coords[1]):
+                            active_room = room_index
+                            print(rommene[active_room].room_coords)
+                            spiller.x = 32
+                            spiller.y = spiller.y
+                            rommene[room_index].place_doors(rommene)
+                            new_room = True
+                if(which_door(new_x, new_y) == 'l'):
+                    for room_index in range(len(rommene)):
+                        if(rommene[room_index].room_coords) == (active_coords[0] - 1,active_coords[1]):
+                            active_room = room_index
+                            print(rommene[active_room].room_coords)
+                            spiller.x = screen.get_width() - 32
+                            spiller.y = spiller.y
+                            rommene[room_index].place_doors(rommene)
+                            new_room = True
+                if(which_door(new_x, new_y) == 'u'):
+                    for room_index in range(len(rommene)):
+                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] + 1):
+                            active_room = room_index
+                            print(rommene[active_room].room_coords)
+                            spiller.x = spiller.x
+                            spiller.y = screen.get_height() - 32
+                            rommene[room_index].place_doors(rommene)
+                            new_room = True
+                if(which_door(new_x, new_y) == 'd'):
+                    for room_index in range(len(rommene)):
+                        if(rommene[room_index].room_coords) == (active_coords[0],active_coords[1] - 1):
+                            active_room = room_index
+                            print(rommene[active_room].room_coords)
+                            spiller.x = spiller.x
+                            spiller.y = 32
+                            rommene[room_index].place_doors(rommene)
+                            new_room = True
+                last_door = time
             enter = False
 
         #oppdaterer alle prosjektiler
@@ -583,10 +581,12 @@ while running:
         spiller.draw()
 
         #Skriver tekst
-        draw_text(f"Health: {spiller.hp}", text_font_s, 'white', 40, 20)
+        draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
 
         # Oppdaterer hele skjermen
         pygame.display.flip()
+
+        enter = False
 
         # Forsikrer at spillet kjører i maksimalt 60 FPS.
         time = pygame.time.get_ticks()
@@ -649,8 +649,8 @@ while running:
         #image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
         screen.blit(image, (0, 0))
 
-        draw_text("Game Over!", text_font_l, 'white', screen.get_width() / 2, screen.get_height() / 2)
-        draw_text(r"Press Enter to restart", text_font_s, 'white', screen.get_width() / 2, screen.get_height() / 1.7)
+        draw_text("Game Over!", text_font_large, 'white', screen.get_width() / 2, screen.get_height() / 2)
+        draw_text(r"Press Enter to restart", text_font_small, 'white', screen.get_width() / 2, screen.get_height() / 1.7)
 
         pygame.display.flip()
 

@@ -163,6 +163,11 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
 
+        
+
+
+
+
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
@@ -181,7 +186,6 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                 if(row == 0) or (row == 9):
                     self.tileset[row][col] = 1
                     self.TheTile = self.wall
-
 
 
                 if self.door_r and col == len(self.tileset[0]) - 1 and row == len(self.tileset) // 2: #sjekker hvilke dører ett rom skal inneholde
@@ -399,15 +403,16 @@ def check_neighbor_rooms():
 
 #Laster inn lyder
 bgm = pygame.mixer.Sound('musiiic.mp3') #importerer lydfilen for bakgrunnsmusikk
-bgm.set_volume(0.3) #halvverer volumet
-bmg_delay = 17000
-last_bgm = -19000
+bgm.set_volume(0.2) #halvverer volumet
+bmg_delay = 17500
+last_bgm = pygame.time.get_ticks()
+bgm.play()
 
 gmover = pygame.mixer.Sound('gameover.mp3')
-gmover.set_volume(0.5)
+gmover.set_volume(1)
 
 s_fx = pygame.mixer.Sound('shoot.mp3') #importerer lydfilen for skyting
-s_fx.set_volume(0.9)
+s_fx.set_volume(2)
 
 b_fx = pygame.mixer.Sound('boom.mp3')
 b_fx.set_volume(0.25)
