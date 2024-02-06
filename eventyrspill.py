@@ -74,14 +74,17 @@ class Spiller:
         
         #ordner selve bildet
         self.image = pygame.Surface((self.sprite_width, self.sprite_heigth)).convert_alpha()
-        self.image.blit(self.sheet, (0, 0), self.TheSprite) #den siset paranteset (top_L_x, top_L_y, bottom_R_x, bottom_R_y) Hvor den henter piksler fra spritesheetet
+        self.image.blit(self.sheet, (0, 0), self.TheSprite) 
         self.image = pygame.transform.scale(self.image, (self.sprite_width* self.scale, self.sprite_heigth * self.scale)) #lar deg skalere bildet etter ønske
         self.image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
         screen.blit(self.image, (self.x - self.sprite_width*self.scale / 2, self.y - self.sprite_heigth*self.scale / 2))
 
 class Fiende():
-    def __init__(self, type, koordinater):
-        a = 1
+    def __init__(self, type, koordinater, skade):
+        self.size = 40
+        self.Rect = pygame.Rect(koordinater, (self.size, self.size))
+        self.hp = 3
+        self.damage = 1
     
 #klasse for magisk/prosjektil angrep
 class Magi:
