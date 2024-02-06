@@ -148,12 +148,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def draw(self):
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
-
         
-
-
-
-
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
                 #bestemmer hvilken tile som skal plasseres
