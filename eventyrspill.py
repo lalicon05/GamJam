@@ -435,7 +435,7 @@ time = 0
 #Kjører spillet -------------------------------------------------------------
 while running:
     if spiller.alive == True:
-        if(time - last_bgm > bmg_delay): #spiller av musikken
+        if(time - last_bgm >= bmg_delay): #spiller av musikken
             bgm.play()
             last_bgm = time
 
@@ -585,6 +585,8 @@ while running:
 
         # Oppdaterer hele skjermen
         pygame.display.flip()
+
+        enter = False
 
         # Forsikrer at spillet kjører i maksimalt 60 FPS.
         time = pygame.time.get_ticks()
