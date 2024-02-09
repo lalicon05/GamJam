@@ -36,6 +36,9 @@ class Spiller:
         self.retning = [0, 0]
         self.skyt_retning = [0, 0]
 
+        #Ting for spillogikk
+        self.time_since_damage = pygame.time.get_ticks()
+        
         #alt som har med utseende å gjøre
         self.size = 25
         self.color = 'black'
@@ -46,8 +49,9 @@ class Spiller:
         self.last_attack = 0
         self.facing_right = 1
         self.facing_down = 1
+        self.invincibility_time = 200
 
-        #alt som har ,med å tegne spriten å gjøre
+        #alt som har, med å tegne spriten å gjøre
         self.sheet = sprite_sheet_image
         self.sprite_width= 24
         self.sprite_heigth = 24
@@ -62,7 +66,11 @@ class Spiller:
             if self.rect.colliderect(x.Rect):
                 self.x += -30 * self.retning[0]
                 self.y += -30 * self.retning[1]
-                self.hp -= 2
+                if ((pygame.time.get_ticks() - self.time_since_damage) > self.invincibility_time):
+                    self.hp -= x.damage
+                    ouch_sound.play()
+                    self.time_since_damage = pygame.time.get_ticks()
+        
     
     def status(self):
         if self.hp <= 0:
@@ -419,6 +427,9 @@ s_fx.set_volume(2)
 b_fx = pygame.mixer.Sound('boom.mp3')
 b_fx.set_volume(0.25)
 
+ouch_sound = pygame.mixer.Sound('classic_hurt.mp3')
+ouch_sound.set_volume(0.5)
+
 #Lager objekter -------------------------------------------------------------------------------------
 spiller = Spiller()
 prosjektiler = []
@@ -624,9 +635,6 @@ while running:
             pygame.mixer.pre_init(44100, -16, 2, 512)
             mixer.init()
             
-            spiller.alive = True
-            spiller.max_hp = 3
-            spiller.hp = spiller.max_hp
             gmover.set_volume(0)
 
             bgm.set_volume(0.3)
@@ -637,10 +645,10 @@ while running:
             enter = False
             active_room = 0
 
+            spiller.alive = True
+            spiller.hp = spiller.max_hp
             spiller.x = screen.get_width() / 2
             spiller.y = screen.get_height() / 2
-            spiller.max_hp = 3
-            spiller.hp = 3
             spiller.retning = [0, 0]
             spiller.skyt_retning = [0, 0]
             spiller.size = 25
