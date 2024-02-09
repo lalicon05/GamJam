@@ -26,7 +26,7 @@ class Spiller:
     #setter opp variabler/attributter for spiller
     def __init__(self):
         #alt som har med start å gjøre
-        self.max_hp = 3
+        self.max_hp = 15
         self.hp = self.max_hp
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
@@ -57,6 +57,17 @@ class Spiller:
 
         self.rect = pygame.Rect((self.x - self.size, self.y - self.size), (self.size, self.size))
 
+    def damagecheck(self, fiende_liste):
+        for x in fiende_liste:
+            if self.rect.colliderect(x.Rect):
+                self.x += -30 * self.retning[0]
+                self.y += -30 * self.retning[1]
+                self.hp -= 2
+    
+    def status(self):
+        if self.hp <= 0:
+            self.alive = False
+                
     #funksjon for å tegne seg selv
     def draw(self):
         
@@ -79,12 +90,16 @@ class Spiller:
         self.image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
         screen.blit(self.image, (self.x - self.sprite_width*self.scale / 2, self.y - self.sprite_heigth*self.scale / 2))
 
+#Klasse for fiender
 class Fiende():
     def __init__(self, type, koordinater, skade):
         self.size = 40
+        self.koordinater = koordinater
         self.Rect = pygame.Rect(koordinater, (self.size, self.size))
         self.hp = 3
-        self.damage = 1
+        self.damage = skade
+    def draw(self):
+        pygame.draw.rect(screen, "Purple", (self.koordinater, (self.size, self.size)))
     
 #klasse for magisk/prosjektil angrep
 class Magi:
@@ -422,7 +437,9 @@ new_room = False
 
 time = 0
 
-
+test_fiende = Fiende(1, (96, 96), 1)
+fiende_liste = []
+fiende_liste.append(test_fiende)
 
 #Kjører spillet -------------------------------------------------------------
 while running:
@@ -568,9 +585,14 @@ while running:
             if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
                 prosjektiler.pop(prosjektiler.index(prosjektil))
             
-
+        spiller.damagecheck(fiende_liste)
+        spiller.status()
+        
         #tegner spiller i sin posisjon
         spiller.draw()
+
+        #Tegner fiender
+        test_fiende.draw()
 
         #Skriver tekst
         draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
@@ -603,6 +625,8 @@ while running:
             mixer.init()
             
             spiller.alive = True
+            spiller.max_hp = 3
+            spiller.hp = spiller.max_hp
             gmover.set_volume(0)
 
             bgm.set_volume(0.3)
