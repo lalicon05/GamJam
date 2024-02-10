@@ -26,7 +26,7 @@ class Spiller:
     #setter opp variabler/attributter for spiller
     def __init__(self):
         #alt som har med start å gjøre
-        self.max_hp = 3
+        self.max_hp = 5
         self.hp = self.max_hp
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
@@ -36,6 +36,9 @@ class Spiller:
         self.retning = [0, 0]
         self.skyt_retning = [0, 0]
 
+        #Ting for spillogikk
+        self.time_since_damage = pygame.time.get_ticks()
+        
         #alt som har med utseende å gjøre
         self.size = 25
         self.color = 'black'
@@ -46,8 +49,9 @@ class Spiller:
         self.last_attack = 0
         self.facing_right = 1
         self.facing_down = 1
+        self.invincibility_time = 400
 
-        #alt som har ,med å tegne spriten å gjøre
+        #alt som har, med å tegne spriten å gjøre
         self.sheet = sprite_sheet_image
         self.sprite_width= 24
         self.sprite_heigth = 24
@@ -57,6 +61,24 @@ class Spiller:
 
         self.rect = pygame.Rect((self.x - self.size, self.y - self.size), (self.size, self.size))
 
+    def damagecheck(self, fiende_liste):
+        if(time - self.time_since_damage > self.invincibility_time):
+            self.speed = 6
+        for x in fiende_liste:
+            if self.rect.colliderect(x.Rect):
+                self.x += -30 * self.retning[0]
+                self.y += -30 * self.retning[1]
+                if ((pygame.time.get_ticks() - self.time_since_damage) > self.invincibility_time):
+                    self.hp -= x.damage
+                    self.speed = 0
+                    ouch_sound.play()
+                    self.time_since_damage = pygame.time.get_ticks()
+        
+    
+    def status(self):
+        if self.hp <= 0:
+            self.alive = False
+                
     #funksjon for å tegne seg selv
     def draw(self):
         
@@ -79,12 +101,36 @@ class Spiller:
         self.image.set_colorkey(self.color) #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
         screen.blit(self.image, (self.x - self.sprite_width*self.scale / 2, self.y - self.sprite_heigth*self.scale / 2))
 
+#Klasse for fiender
 class Fiende():
     def __init__(self, type, koordinater, skade):
+
+        """
+        type : alternativer('basic', 'cucumber', 'ranged')
+        """
         self.size = 40
+        self.koordinater = koordinater
         self.Rect = pygame.Rect(koordinater, (self.size, self.size))
         self.hp = 3
-        self.damage = 1
+        self.damage = skade
+        self.type = type
+
+        self.sheet = sprite_sheet_image
+        self.image = pygame.Surface((24, 24)).convert_alpha()
+
+        if(self.type == 'basic'):
+            self.basic_enemy_sheet = (0, 24, 24, 48)
+            self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
+            self.image = pygame.transform.scale(self.image, (self.size, self.size))
+            self.image.set_colorkey('BLACK')
+            
+            
+
+    def draw(self):
+        #pygame.draw.rect(screen, "Purple", (self.koordinater, (self.size, self.size)))
+        if(self.type == "basic"):
+            #self.basic_enemy_sheet = (0, 24, 24, 48)
+            screen.blit(self.image, self.koordinater)
     
 #klasse for magisk/prosjektil angrep
 class Magi:
@@ -96,6 +142,13 @@ class Magi:
         self.y = y
         self.rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
+        self.sheet = sprite_sheet_image
+        self.basic_enemy_sheet = (0, 48, 24, 72)
+        self.image = pygame.Surface((24, 24)).convert_alpha()
+        self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
+        self.image = pygame.transform.scale(self.image, (18, 18))
+        self.image.set_colorkey('BLACK')
+
     #funksjon for å oppdatere prosjektilet
     def update(self):
         if(self.retning[0] != 0) and (self.retning[1] != 0):
@@ -104,13 +157,14 @@ class Magi:
         else:
             self.x += self.retning[0] * self.speed
             self.y += self.retning[1] * self.speed
-        pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
-        self.rect = pygame.Rect(self.x - 3, self.y - 6, 12, 12)
+        #pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
+        self.rect = pygame.Rect(self.x - 8, self.y - 8, 16, 16)
+        screen.blit(self.image, (self.x - 9, self.y - 9))
 
 
 
 class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
-    def __init__(self, tileset, room_coords):
+    def __init__(self, tileset, room_coords, enemy_list):
         self.sheet = sprite_sheet_image #laster inn sprite -sheet
         self.tileset = tileset #
 
@@ -124,6 +178,8 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.wall = (96, 24, 119, 48) 
         self.door_locked = (96, 49, 119, 72)
         self.door_unlocked = (96, 72, 119, 96)
+
+        self.enemy_list = enemy_list
     
     def get_room_coords(self):
         return self.room_coords
@@ -154,6 +210,8 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
     def draw(self):
         self.wall_rects = [] #liste over alle vegger
         self.door_rects = []
+
+        
 
         for row in range(len(self.tileset)):
             for col in range(len(self.tileset[row])):
@@ -196,11 +254,16 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                 image.set_colorkey('BLACK') #Fjerner alle piksler med denne fargen, fordi jeg velger svart må man velge en annen farge
                 screen.blit(image, (col*48, row*48))
 
+
                 if self.get_tile_type(row, col) == 3:
                     self.door_rects.append(pygame.Rect(self.get_tile_position(row, col), (48, 48)))
 
                 if self.get_tile_type(row, col) == 1: #hvis tile er en vegg, legg til i liste over vegger
                     self.wall_rects.append(pygame.Rect(self.get_tile_position(row, col), (48, 48)))
+
+            for i in self.enemy_list:
+                i.draw()
+
         return self.wall_rects #returnerer vegger slik at man kan kollidere med de
             
     def get_tile_type(self, row, col): #returnerer type tile
@@ -231,7 +294,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (0, 0)))
+                ], (0, 0), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -243,7 +306,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (-1, 0)))
+                ], (-1, 0), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -255,7 +318,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (1, 1)))
+                ], (1, 1), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -267,7 +330,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (1, 0)))
+                ], (1, 0), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -279,7 +342,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (0, -1)))
+                ], (0, -1), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -291,7 +354,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (0, -2)))
+                ], (0, -2), [Fiende('basic',(100, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -303,7 +366,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (0, 1)))
+                ], (0, 1), [Fiende('basic',(100, 100), 1)]))
 
 
 #Funksjoner-------------------------------------------------------------------------------------------------------
@@ -404,6 +467,9 @@ s_fx.set_volume(2)
 b_fx = pygame.mixer.Sound('boom.mp3')
 b_fx.set_volume(0.25)
 
+ouch_sound = pygame.mixer.Sound('classic_hurt.mp3')
+ouch_sound.set_volume(0.5)
+
 #Lager objekter -------------------------------------------------------------------------------------
 spiller = Spiller()
 prosjektiler = []
@@ -422,7 +488,9 @@ new_room = False
 
 time = 0
 
-
+#test_fiende = Fiende('basic', (60, 96), 1)
+fiende_liste = []
+#fiende_liste.append(test_fiende)
 
 #Kjører spillet -------------------------------------------------------------
 while running:
@@ -503,6 +571,11 @@ while running:
 
         player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
         rommene[active_room].draw() #tegner rommet
+        spiller.damagecheck(rommene[active_room].enemy_list)
+        spiller.status()
+        
+        #tegner spiller i sin posisjon
+        spiller.draw()
 
 
         #sjekker om man er i en dør mens man trykker enter
@@ -568,9 +641,14 @@ while running:
             if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
                 prosjektiler.pop(prosjektiler.index(prosjektil))
             
-
+        """spiller.damagecheck(rommene[active_room].enemy_list)
+        spiller.status()
+        
         #tegner spiller i sin posisjon
-        spiller.draw()
+        spiller.draw()"""
+
+        #Tegner fiender
+        #test_fiende.draw()
 
         #Skriver tekst
         draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
@@ -602,7 +680,6 @@ while running:
             pygame.mixer.pre_init(44100, -16, 2, 512)
             mixer.init()
             
-            spiller.alive = True
             gmover.set_volume(0)
 
             bgm.set_volume(0.3)
@@ -613,10 +690,10 @@ while running:
             enter = False
             active_room = 0
 
+            spiller.alive = True
+            spiller.hp = spiller.max_hp
             spiller.x = screen.get_width() / 2
             spiller.y = screen.get_height() / 2
-            spiller.max_hp = 3
-            spiller.hp = 3
             spiller.retning = [0, 0]
             spiller.skyt_retning = [0, 0]
             spiller.size = 25
