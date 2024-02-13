@@ -138,12 +138,16 @@ class Fiende():
             self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
             self.image = pygame.transform.scale(self.image, (self.size, self.size))
             self.image.set_colorkey('BLACK')
+        
+
+    #funksjon for å skyte
     def shoot(self):
         if self.can_shoot:
             if(time - self.last_shoot > 1000):
                 fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1]))
                 self.last_shoot = time
-        
+    
+    #funksjon for å sjekke om den tar skade
     def damage_check(self, prosjektil_liste):
         #Her bruker jeg en while løkke fordi jeg ønsker å endre lengden på listen underveis
         index = 0
@@ -194,7 +198,7 @@ class Magi:
             self.x += self.retning[0] * self.speed
             self.y += self.retning[1] * self.speed
         #pygame.draw.circle(screen, 'blue', (self.x, self.y), 8)
-        self.rect = pygame.Rect(self.x - 8, self.y - 8, 16, 16)
+        self.Rect = pygame.Rect(self.x - 8, self.y - 8, 16, 16)
         screen.blit(self.image, (self.x - 9, self.y - 9))
 
 
@@ -216,6 +220,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.door_unlocked = (96, 72, 119, 96)
 
         self.enemy_list = enemy_list
+        self.wall_rects = []
     
     def get_room_coords(self):
         return self.room_coords
@@ -301,7 +306,7 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
                 i.draw()
 
         return self.wall_rects #returnerer vegger slik at man kan kollidere med de
-            
+
     def get_tile_type(self, row, col): #returnerer type tile
         return self.tileset[row][col]
     
@@ -671,7 +676,7 @@ while running:
         for prosjektil in spiller_prosjektiler:
             prosjektil.update() #oppdaterer spiller_prosjektiler
             for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
-                if pygame.Rect.colliderect(prosjektil.rect, wall):
+                if pygame.Rect.colliderect(prosjektil.Rect, wall):
                     try:
                         spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
                         b_fx.play()
@@ -691,7 +696,7 @@ while running:
         for prosjektil in fiende_prosjektiler:
             prosjektil.update() #oppdaterer fiende_prosjektiler
             for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
-                if pygame.Rect.colliderect(prosjektil.rect, wall):
+                if pygame.Rect.colliderect(prosjektil.Rect, wall):
                     try:
                         fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
                         b_fx.play()
