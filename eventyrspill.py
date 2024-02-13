@@ -124,7 +124,23 @@ class Fiende():
             self.image = pygame.transform.scale(self.image, (self.size, self.size))
             self.image.set_colorkey('BLACK')
             
+    def damage_check(self, prosjektil_liste):
+        #Her bruker jeg en while løkke fordi jeg ønsker å endre lengden på listen underveis
+        index = 0
+        while index < len(prosjektil_liste):
+            if self.Rect.colliderect(prosjektil_liste[index]):
+                self.hp -= prosjektil_liste[index].damage
+                prosjektil_liste.pop(index)
+                """
+                Her kan du putte lydeffekt Lasse
+                
+                """
+            index += 1
             
+    def alive(self):
+        if self.hp <= 0:
+            return False
+        return True
 
     def draw(self):
         #pygame.draw.rect(screen, "Purple", (self.koordinater, (self.size, self.size)))
@@ -370,6 +386,15 @@ rommene.append(Tileset([
 
 
 #Funksjoner-------------------------------------------------------------------------------------------------------
+#dreper fiender hvis de er døde
+def fiende_fjerner(fiende_liste):
+    #Bruker while løkke fordi jeg endrer listen underveis
+    index = 0
+    while index < len(fiende_liste):
+        if not fiende_liste[index].alive():
+            fiende_liste.pop(index)
+        index += 1
+
 #fonts og størrelse til tekst
 text_font_small = pygame.font.SysFont("Arial", 24) # liten tekst
 text_font_medium = pygame.font.SysFont("Arial", 36) # Medium tekst
@@ -426,6 +451,7 @@ def door_handle(player_rect, door_rects):
             return True
     return False
 
+#Sjekker hvilken dør spilleren er ved
 def which_door(playerx, playery):
     if (playerx > (screen.get_width() - 96)):
         return 'r'
@@ -472,7 +498,7 @@ ouch_sound.set_volume(0.5)
 
 #Lager objekter -------------------------------------------------------------------------------------
 spiller = Spiller()
-prosjektiler = []
+spiller_prosjektiler = []
 
 
 
@@ -488,9 +514,6 @@ new_room = False
 
 time = 0
 
-#test_fiende = Fiende('basic', (60, 96), 1)
-fiende_liste = []
-#fiende_liste.append(test_fiende)
 
 #Kjører spillet -------------------------------------------------------------
 while running:
@@ -544,12 +567,12 @@ while running:
             if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
                 if(spiller.retning != [0, 0]):
                     spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
-                    prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
                     spiller.last_attack = time
                     s_fx.play()
                 else:
                     spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
-                    prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
                     spiller.last_attack = time
                     s_fx.play()
 
@@ -573,7 +596,9 @@ while running:
         rommene[active_room].draw() #tegner rommet
         spiller.damagecheck(rommene[active_room].enemy_list)
         spiller.status()
-        
+        for x in rommene[active_room].enemy_list:
+            x.damage_check(spiller_prosjektiler)
+        fiende_fjerner(rommene[active_room].enemy_list)
         #tegner spiller i sin posisjon
         spiller.draw()
 
@@ -620,36 +645,27 @@ while running:
                 last_door = time
             enter = False
 
-        #oppdaterer alle prosjektiler
-        for prosjektil in prosjektiler:
-            prosjektil.update() #oppdaterer prosjektiler
+        #oppdaterer alle spiller_prosjektiler
+        for prosjektil in spiller_prosjektiler:
+            prosjektil.update() #oppdaterer spiller_prosjektiler
             for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
                 if pygame.Rect.colliderect(prosjektil.rect, wall):
                     try:
-                        prosjektiler.pop(prosjektiler.index(prosjektil))
+                        spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
                         b_fx.play()
                     except:
                         print("did not")
 
-            if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis prosjektiler går utenfor skjermen på sidene
-                prosjektiler.pop(prosjektiler.index(prosjektil))
+            if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis spiller_prosjektiler går utenfor skjermen på sidene
+                spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
                 b_fx.play()
             if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
-                prosjektiler.pop(prosjektiler.index(prosjektil))
+                spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
                 b_fx.play()
 
-            if(prosjektil.retning == [0, 0]): #fjerner prosjektiler som står stille
-                prosjektiler.pop(prosjektiler.index(prosjektil))
+            if(prosjektil.retning == [0, 0]): #fjerner spiller_prosjektiler som står stille
+                spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
             
-        """spiller.damagecheck(rommene[active_room].enemy_list)
-        spiller.status()
-        
-        #tegner spiller i sin posisjon
-        spiller.draw()"""
-
-        #Tegner fiender
-        #test_fiende.draw()
-
         #Skriver tekst
         draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
 
