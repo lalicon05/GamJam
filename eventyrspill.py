@@ -26,7 +26,7 @@ class Spiller:
     #setter opp variabler/attributter for spiller
     def __init__(self):
         #alt som har med start å gjøre
-        self.max_hp = 10
+        self.max_hp = 5
         self.hp = self.max_hp
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
@@ -61,25 +61,25 @@ class Spiller:
 
         self.rect = pygame.Rect((self.x - self.size, self.y - self.size), (self.size, self.size))
 
-    def damagecheck(self, fiende_liste):
+    def damagecheck(self, angrep_liste, knockback, slowdown):
         if(time - self.time_since_damage > self.invincibility_time):
             self.speed = 6
-        for x in fiende_liste:
+        for x in angrep_liste:
             if self.rect.colliderect(x.Rect):
-                self.x += -30 * self.retning[0]
-                self.y += -30 * self.retning[1]
+                self.x += -knockback * self.retning[0]
+                self.y += -knockback * self.retning[1]
                 if ((pygame.time.get_ticks() - self.time_since_damage) > self.invincibility_time):
                     self.hp -= x.damage
-                    self.speed = 0
+                    self.speed *= slowdown
                     ouch_sound.play()
                     self.time_since_damage = pygame.time.get_ticks()
         
     
     def status(self):
         if self.hp <= 0:
-            gmover.play()
-            last_bgm = time
             self.alive = False
+            last_bgm = time
+            gmover.play()
                 
     #funksjon for å tegne seg selv
     def draw(self):
@@ -110,22 +110,37 @@ class Fiende():
         """
         type : alternativer('basic', 'cucumber', 'ranged')
         """
+        
+        self.speed = 3
+        self.can_shoot = False
+        self.can_move = False
         self.size = 40
         self.koordinater = koordinater
         self.Rect = pygame.Rect(koordinater, (self.size, self.size))
         self.hp = 3
         self.damage = skade
         self.type = type
+        self.retning = [0, 0]
 
         self.sheet = sprite_sheet_image
         self.image = pygame.Surface((24, 24)).convert_alpha()
 
-        if(self.type == 'basic'):
+        if (self.type == 'basic'):
+            self.can_move = True
             self.basic_enemy_sheet = (0, 24, 24, 48)
             self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
             self.image = pygame.transform.scale(self.image, (self.size, self.size))
             self.image.set_colorkey('BLACK')
-            
+        elif (self.type == 'ranged'):
+            self.can_shoot = True
+            self.basic_enemy_sheet = (72, 24, 96, 24)
+            self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
+            self.image = pygame.transform.scale(self.image, (self.size, self.size))
+            self.image.set_colorkey('BLACK')
+    def shoot(self):
+        if self.can_shoot:
+            fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1]))
+        
     def damage_check(self, prosjektil_liste):
         #Her bruker jeg en while løkke fordi jeg ønsker å endre lengden på listen underveis
         index = 0
@@ -141,13 +156,15 @@ class Fiende():
             return False
         return True
 
+    def finn_retning(self, mål):
+        vektor = pygame.math.Vector2(mål.x - self.koordinater[0], mål.y - self.koordinater[1])
+        self.retning = list[vektor.normalize()]
+        
     def draw(self):
-        #pygame.draw.rect(screen, "Purple", (self.koordinater, (self.size, self.size)))
-        if(self.type == "basic"):
-            #self.basic_enemy_sheet = (0, 24, 24, 48)
-            screen.blit(self.image, self.koordinater)
+        screen.blit(self.image, self.koordinater)
         pygame.draw.rect(screen, 'red', (self.koordinater[0] - 8, self.koordinater[1] - 13, 55, 6))
         pygame.draw.rect(screen, 'green', (self.koordinater[0] - 8, self.koordinater[1] - 13, (55/3) * self.hp, 6))
+    
 #klasse for magisk/prosjektil angrep
 class Magi:
     def __init__(self, retning, x, y):
@@ -310,7 +327,7 @@ rommene.append(Tileset([
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-                ], (0, 0), [Fiende('basic',(100, 100), 1)]))
+                ], (0, 0), [Fiende('basic',(100, 100), 1), Fiende('ranged', (600, 100), 1), Fiende('basic',(150, 100), 1)]))
 rommene.append(Tileset([
                 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -415,7 +432,7 @@ def get_image(sheet, width, height, scale, color):
     return image
 
 #spiller kollidere med vegg
-def player_collide_wall(new_x, new_y):
+def wall_collision(new_x, new_y):
     #sjekker om spiller kollidere på x-akse
     player_rect_x = pygame.Rect(new_x - spiller.size / 2, spiller.y - spiller.size / 2, spiller.size, spiller.size)
     wall_rects_x = rommene[active_room].draw()  # Henter vegg tiles fra rommet for å kollidere med de
@@ -499,8 +516,7 @@ ouch_sound.set_volume(0.5)
 #Lager objekter -------------------------------------------------------------------------------------
 spiller = Spiller()
 spiller_prosjektiler = []
-
-
+fiende_prosjektiler = []
 
 last_door = 0
 enter = False
@@ -592,9 +608,10 @@ while running:
 
 
 
-        player_collide_wall(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
+        wall_collision(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
         rommene[active_room].draw() #tegner rommet
-        spiller.damagecheck(rommene[active_room].enemy_list)
+        spiller.damagecheck(rommene[active_room].enemy_list, 30, 0.2)
+        spiller.damagecheck(fiende_prosjektiler, 10, 0.8)
         spiller.status()
         for x in rommene[active_room].enemy_list:
             x.damage_check(spiller_prosjektiler)
@@ -666,13 +683,10 @@ while running:
             if(prosjektil.retning == [0, 0]): #fjerner spiller_prosjektiler som står stille
                 spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
             
-        #Skriver tekst
-        draw_text(f"Health:", text_font_small, 'white', 40, 17)
 
-
-        #tegner spiller hp:
-        pygame.draw.rect(screen, 'green', (10, 30, spiller.hp * 20, 9))
-        draw_text(f"{spiller.hp}", text_font_small, 'white', 84, 17)
+        #tegner health bar
+        pygame.draw.rect(screen, 'green', (3, 30, spiller.hp * 20, 9))
+        draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 17)
 
         # Oppdaterer hele skjermen
         pygame.display.flip()
