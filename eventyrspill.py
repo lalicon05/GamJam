@@ -144,7 +144,7 @@ class Fiende():
     def shoot(self):
         if self.can_shoot:
             if(time - self.last_shoot > 1000):
-                fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1]))
+                fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1], 1))
                 self.last_shoot = time
     
     #funksjon for å sjekke om den tar skade
@@ -174,18 +174,24 @@ class Fiende():
     
 #klasse for magisk/prosjektil angrep
 class Magi:
-    def __init__(self, retning, x, y):
+    def __init__(self, retning, x, y, aligmenet):
         self.damage = 1
         self.speed = 10
         self.retning = retning
         self.x = x
         self.y = y
+        
+
         self.Rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
         self.sheet = sprite_sheet_image
-        self.basic_enemy_sheet = (0, 48, 24, 72)
+        if aligmenet == 0:
+            self.sprite = (0, 48, 24, 72)
+        if aligmenet == 1:
+            self.sprite = (24, 48, 48, 72)
+
         self.image = pygame.Surface((24, 24)).convert_alpha()
-        self.image.blit(self.sheet, (0, 0), self.basic_enemy_sheet)
+        self.image.blit(self.sheet, (0, 0), self.sprite)
         self.image = pygame.transform.scale(self.image, (18, 18))
         self.image.set_colorkey('BLACK')
 
@@ -591,12 +597,12 @@ while running:
             if(time - spiller.last_attack) > ((1 / spiller.attackspeed)*1000): #sjekker om man prøver å skyte før cooldown er over
                 if(spiller.retning != [0, 0]):
                     spiller.skyt_retning = [spiller.retning[0], spiller.retning[1]]
-                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y, 0))
                     spiller.last_attack = time
                     s_fx.play()
                 else:
                     spiller.skyt_retning = [spiller.facing_right, spiller.facing_down]
-                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y))
+                    spiller_prosjektiler.append(Magi(spiller.skyt_retning, spiller.x, spiller.y, 0))
                     spiller.last_attack = time
                     s_fx.play()
 
