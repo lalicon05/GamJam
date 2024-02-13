@@ -157,8 +157,9 @@ class Fiende():
         return True
 
     def finn_retning(self, mål):
-        vektor = pygame.math.Vector2(mål.x - self.koordinater[0], mål.y - self.koordinater[1])
-        self.retning = list[vektor.normalize()]
+        vektor = pygame.math.Vector2(mål[0] - self.koordinater[0], mål[1] - self.koordinater[1])
+        print(vektor)
+        self.retning = list([vektor.normalize()[0], vektor.normalize()[1]])
         
     def draw(self):
         if(self.type == "basic"):
@@ -170,10 +171,10 @@ class Magi:
     def __init__(self, retning, x, y):
         self.damage = 1
         self.speed = 10
-        self.retning = retning
+        self.retning = [float(retning[0]), float(retning[1])]
         self.x = x
         self.y = y
-        self.rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
+        self.Rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
         self.sheet = sprite_sheet_image
         self.basic_enemy_sheet = (0, 48, 24, 72)
@@ -607,9 +608,13 @@ while running:
             new_room = False
 
 
-
         wall_collision(new_x, new_y) #sjekker om spiller kolliderer med vegger og korrigerer bevegelse deretter
         rommene[active_room].draw() #tegner rommet
+        for x in rommene[active_room].enemy_list:
+            x.finn_retning([spiller.x, spiller.y])
+            x.shoot()
+        for x in fiende_prosjektiler:
+            x.update()
         spiller.damagecheck(rommene[active_room].enemy_list, 30, 0.2)
         spiller.damagecheck(fiende_prosjektiler, 10, 0.8)
         spiller.status()
@@ -682,6 +687,26 @@ while running:
 
             if(prosjektil.retning == [0, 0]): #fjerner spiller_prosjektiler som står stille
                 spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
+                
+        for prosjektil in fiende_prosjektiler:
+            prosjektil.update() #oppdaterer fiende_prosjektiler
+            for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
+                if pygame.Rect.colliderect(prosjektil.rect, wall):
+                    try:
+                        fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                        b_fx.play()
+                    except:
+                        print("did not")
+
+            if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis fiende_prosjektiler går utenfor skjermen på sidene
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                b_fx.play()
+            if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                b_fx.play()
+
+            if(prosjektil.retning == [0, 0]): #fjerner fiende_prosjektiler som står stille
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
             
         #Skriver tekst
         draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
