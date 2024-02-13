@@ -64,15 +64,20 @@ class Spiller:
     def damagecheck(self, angrep_liste, knockback, slowdown):
         if(time - self.time_since_damage > self.invincibility_time):
             self.speed = 6
-        for x in angrep_liste:
-            if self.rect.colliderect(x.Rect):
+        index = 0
+        while index < len(angrep_liste):
+            if self.rect.colliderect(angrep_liste[index].Rect):
+                if (type(angrep_liste[index]) == '__main__.Magi'):
+                    print("AAAAAAAAAAA")
+                    fiende_prosjektiler.pop(index)
                 self.x += -knockback * self.retning[0]
                 self.y += -knockback * self.retning[1]
                 if ((pygame.time.get_ticks() - self.time_since_damage) > self.invincibility_time):
-                    self.hp -= x.damage
+                    self.hp -= angrep_liste[index].damage
                     self.speed *= slowdown
                     ouch_sound.play()
                     self.time_since_damage = pygame.time.get_ticks()
+            index += 1
         
     
     def status(self):
