@@ -121,6 +121,7 @@ class Fiende():
         self.damage = skade
         self.type = type
         self.retning = [0, 0]
+        self.last_shoot = 0
 
         self.sheet = sprite_sheet_image
         self.image = pygame.Surface((24, 24)).convert_alpha()
@@ -139,13 +140,15 @@ class Fiende():
             self.image.set_colorkey('BLACK')
     def shoot(self):
         if self.can_shoot:
-            fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1]))
+            if(time - self.last_shoot > 1000):
+                fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1]))
+                self.last_shoot = time
         
     def damage_check(self, prosjektil_liste):
         #Her bruker jeg en while løkke fordi jeg ønsker å endre lengden på listen underveis
         index = 0
         while index < len(prosjektil_liste):
-            if self.Rect.colliderect(prosjektil_liste[index]):
+            if (self.Rect.colliderect(prosjektil_liste[index].Rect)):
                 self.hp -= prosjektil_liste[index].damage
                 prosjektil_liste.pop(index)
                 b_fx.play()
@@ -158,7 +161,7 @@ class Fiende():
 
     def finn_retning(self, mål):
         vektor = pygame.math.Vector2(mål.x - self.koordinater[0], mål.y - self.koordinater[1])
-        self.retning = list[vektor.normalize()]
+        self.retning = list([vektor.normalize()[0], vektor.normalize()[1]])
         
     def draw(self):
         screen.blit(self.image, self.koordinater)
@@ -173,7 +176,7 @@ class Magi:
         self.retning = retning
         self.x = x
         self.y = y
-        self.rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
+        self.Rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
         self.sheet = sprite_sheet_image
         self.basic_enemy_sheet = (0, 48, 24, 72)
@@ -615,6 +618,8 @@ while running:
         spiller.status()
         for x in rommene[active_room].enemy_list:
             x.damage_check(spiller_prosjektiler)
+            x.finn_retning(spiller)
+            x.shoot()
         fiende_fjerner(rommene[active_room].enemy_list)
         #tegner spiller i sin posisjon
         spiller.draw()
@@ -683,6 +688,25 @@ while running:
             if(prosjektil.retning == [0, 0]): #fjerner spiller_prosjektiler som står stille
                 spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
             
+        for prosjektil in fiende_prosjektiler:
+            prosjektil.update() #oppdaterer fiende_prosjektiler
+            for wall in rommene[active_room].get_walls(): #sjekker om prosjektilet kolliderer med en vegg
+                if pygame.Rect.colliderect(prosjektil.rect, wall):
+                    try:
+                        fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                        b_fx.play()
+                    except:
+                        print("did not")
+
+            if prosjektil.x < 0 or prosjektil.x > screen.get_width(): #sletter hvis fiende_prosjektiler går utenfor skjermen på sidene
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                b_fx.play()
+            if prosjektil.y < 0 or prosjektil.y > screen.get_height(): #fjerner prosjektilet hvis det går over eller under skjermen
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
+                b_fx.play()
+
+            if(prosjektil.retning == [0, 0]): #fjerner fiende_prosjektiler som står stille
+                fiende_prosjektiler.pop(fiende_prosjektiler.index(prosjektil))
 
         #tegner health bar
         pygame.draw.rect(screen, 'green', (3, 30, spiller.hp * 20, 9))
