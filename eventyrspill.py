@@ -26,7 +26,7 @@ class Spiller:
     #setter opp variabler/attributter for spiller
     def __init__(self):
         #alt som har med start å gjøre
-        self.max_hp = 5
+        self.max_hp = 10
         self.hp = self.max_hp
         self.x = screen.get_width() / 2
         self.y = screen.get_height() / 2
@@ -77,6 +77,8 @@ class Spiller:
     
     def status(self):
         if self.hp <= 0:
+            gmover.play()
+            last_bgm = time
             self.alive = False
                 
     #funksjon for å tegne seg selv
@@ -131,10 +133,7 @@ class Fiende():
             if self.Rect.colliderect(prosjektil_liste[index]):
                 self.hp -= prosjektil_liste[index].damage
                 prosjektil_liste.pop(index)
-                """
-                Her kan du putte lydeffekt Lasse
-                
-                """
+                b_fx.play()
             index += 1
             
     def alive(self):
@@ -147,7 +146,8 @@ class Fiende():
         if(self.type == "basic"):
             #self.basic_enemy_sheet = (0, 24, 24, 48)
             screen.blit(self.image, self.koordinater)
-    
+        pygame.draw.rect(screen, 'red', (self.koordinater[0] - 8, self.koordinater[1] - 13, 55, 6))
+        pygame.draw.rect(screen, 'green', (self.koordinater[0] - 8, self.koordinater[1] - 13, (55/3) * self.hp, 6))
 #klasse for magisk/prosjektil angrep
 class Magi:
     def __init__(self, retning, x, y):
@@ -667,7 +667,12 @@ while running:
                 spiller_prosjektiler.pop(spiller_prosjektiler.index(prosjektil))
             
         #Skriver tekst
-        draw_text(f"Health: {spiller.hp}", text_font_small, 'white', 40, 20)
+        draw_text(f"Health:", text_font_small, 'white', 40, 17)
+
+
+        #tegner spiller hp:
+        pygame.draw.rect(screen, 'green', (10, 30, spiller.hp * 20, 9))
+        draw_text(f"{spiller.hp}", text_font_small, 'white', 84, 17)
 
         # Oppdaterer hele skjermen
         pygame.display.flip()
