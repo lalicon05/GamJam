@@ -12,6 +12,7 @@ screen = pygame.display.set_mode((768, 480)) # Setter skjermen til 500x500 piksl
 pygame.display.set_caption(r"Kjeller-eventyr") #navnet på spillet
 clock = pygame.time.Clock()
 running = True
+Won = False
 
 #Konstante variabler
 spiller_mot_høyre = (0, 0, 24 , 24)
@@ -67,9 +68,7 @@ class Spiller:
         index = 0
         while index < len(angrep_liste):
             if self.rect.colliderect(angrep_liste[index].Rect):
-                if (type(angrep_liste[index]) == '__main__.Magi'):
-                    print("AAAAAAAAAAA")
-                    fiende_prosjektiler.pop(index)
+                                
                 self.x += -knockback * self.retning[0]
                 self.y += -knockback * self.retning[1]
                 if ((pygame.time.get_ticks() - self.time_since_damage) > self.invincibility_time):
@@ -77,6 +76,13 @@ class Spiller:
                     self.speed *= slowdown
                     ouch_sound.play()
                     self.time_since_damage = pygame.time.get_ticks()
+                #Hvis objektet i listen har attributten "alignment" så er den et prosjektil, og da skal den fjernes
+                try:
+                    angrep_liste[index].alignment
+                    angrep_liste.pop(index)
+                #Putter noe som ikke gjør noe i except 
+                except: 
+                    index = index
             index += 1
         
     
@@ -116,11 +122,12 @@ class Fiende():
         type : alternativer('basic', 'cucumber', 'ranged')
         """
         
-        self.speed = 3
+        self.speed = 2
         self.can_shoot = False
         self.can_move = False
         self.size = 40
-        self.koordinater = koordinater
+        self.start_koordinater = list(koordinater)
+        self.koordinater = list(koordinater)
         self.Rect = pygame.Rect(koordinater, (self.size, self.size))
         self.hp = 3
         self.damage = skade
@@ -149,8 +156,14 @@ class Fiende():
     def shoot(self):
         if self.can_shoot:
             if(time - self.last_shoot > 1000):
-                fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0], self.koordinater[1], 1))
+                fiende_prosjektiler.append(Magi(self.retning, self.koordinater[0] + self.size/2, self.koordinater[1] + self.size/2, 1))
                 self.last_shoot = time
+                
+    def move(self):
+        if self.can_move:
+            self.koordinater[0] += self.speed * self.retning[0]
+            self.koordinater[1] += self.speed * self.retning[1]
+            self.Rect = pygame.Rect(tuple(self.koordinater), (self.size, self.size))
     
     #funksjon for å sjekke om den tar skade
     def damage_check(self, prosjektil_liste):
@@ -179,7 +192,8 @@ class Fiende():
     
 #klasse for magisk/prosjektil angrep
 class Magi:
-    def __init__(self, retning, x, y, aligmenet):
+    def __init__(self, retning, x, y, alignment):
+        self.alignment = alignment
         self.damage = 1
         self.speed = 10
         self.retning = retning
@@ -190,9 +204,11 @@ class Magi:
         self.Rect = pygame.Rect(self.x - 6, self.y - 6, 12, 12)
 
         self.sheet = sprite_sheet_image
-        if aligmenet == 0:
+        #Spiller sitt prosjektil
+        if alignment == 0:
             self.sprite = (0, 48, 24, 72)
-        if aligmenet == 1:
+        #Fiende sitt prosjektil
+        if alignment == 1:
             self.sprite = (24, 48, 48, 72)
 
         self.image = pygame.Surface((24, 24)).convert_alpha()
@@ -230,8 +246,15 @@ class Tileset(): #Klasse for å opprette ett tileset knyttet til ett rom
         self.door_locked = (96, 49, 119, 72)
         self.door_unlocked = (96, 72, 119, 96)
 
+        #Data om fiender
+        self.cleared = False
+        self.starting_enemy_list = enemy_list[:]
         self.enemy_list = enemy_list
         self.wall_rects = []
+    
+    def check_if_empty(self):
+        if len(self.enemy_list) == 0:
+            self.cleared = True
     
     def get_room_coords(self):
         return self.room_coords
@@ -552,7 +575,7 @@ time = 0
 
 #Kjører spillet -------------------------------------------------------------
 while running:
-    if spiller.alive == True:
+    if spiller.alive and (not Won):
         if(time - last_bgm >= bmg_delay): #spiller av musikken
             bgm.play()
             last_bgm = time
@@ -635,8 +658,10 @@ while running:
         for x in rommene[active_room].enemy_list:
             x.damage_check(spiller_prosjektiler)
             x.finn_retning(spiller)
+            x.move()
             x.shoot()
         fiende_fjerner(rommene[active_room].enemy_list)
+        rommene[active_room].check_if_empty()
         #tegner spiller i sin posisjon
         spiller.draw()
 
@@ -736,6 +761,10 @@ while running:
         # Forsikrer at spillet kjører i maksimalt 60 FPS.
         time = pygame.time.get_ticks()
         clock.tick(60)
+    elif Won:
+        print("Du vant")
+    
+    
     else:
         bgm.set_volume(0)
         gmover.set_volume(1)
@@ -760,6 +789,16 @@ while running:
             bgm.set_volume(0.3)
             last_bgm = time
             bgm.play()
+
+            for x in rommene:
+                x.cleared = False
+                x.enemy_list = x.starting_enemy_list[:]
+            
+            for x in rommene:
+                for y in x.enemy_list:
+                    y.hp = 3
+                    y.koordinater = y.start_koordinater[:]
+                    y.Rect = pygame.Rect(tuple(y.koordinater), (y.size, y.size))
 
             last_door = 0
             enter = False
